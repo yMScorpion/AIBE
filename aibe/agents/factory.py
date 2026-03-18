@@ -1,9 +1,8 @@
-"""Agent factory — instantiates all 35 agents with their configs.
+"""Agent factory — instantiates all 41 agents with their configs.
 
 Maps agent IDs to their implementation classes and creates
 fully configured agent instances from agents.yaml config.
 """
-
 from __future__ import annotations
 
 from typing import Any, Optional, Type
@@ -16,7 +15,6 @@ logger = get_logger(__name__)
 
 # ── Agent class registry ──────────────────────────────────────
 # Maps agent_id to (module_path, class_name, tier)
-
 AGENT_CATALOG: dict[str, tuple[str, str, int]] = {
     # Tier 0 — Executive
     "oracle": ("aibe.agents.executive.oracle", "Oracle", 0),
@@ -47,15 +45,16 @@ AGENT_CATALOG: dict[str, tuple[str, str, int]] = {
     # Tier 5 — Finance
     "ledger": ("aibe.agents.finance.ledger", "Ledger", 5),
     "atlas": ("aibe.agents.finance.atlas", "Atlas", 5),
-    # Tier 6 — AI/ML
-    "cipher": ("aibe.agents.ai_ml.cipher", "Cipher", 6),
-    "tensor": ("aibe.agents.ai_ml.tensor", "Tensor", 6),
-    "neural": ("aibe.agents.ai_ml.neural", "Neural", 6),
-    "optimus": ("aibe.agents.ai_ml.optimus", "Optimus", 6),
-    # Tier 7 — Evolution
-    "darwin": ("aibe.agents.evolution.darwin", "Darwin", 7),
-    "synth": ("aibe.agents.evolution.synth", "Synth", 7),
-    "automata": ("aibe.agents.evolution.automata", "Automata", 7),
+    "procurator": ("aibe.agents.finance.procurator", "Procurator", 5),
+    # Tier 6 — Evolution
+    "darwin": ("aibe.agents.evolution.darwin", "Darwin", 6),
+    "synth": ("aibe.agents.evolution.synth", "Synth", 6),
+    "automata": ("aibe.agents.evolution.automata", "Automata", 6),
+    # Tier 7 — AI/ML
+    "cipher": ("aibe.agents.ai_ml.cipher", "Cipher", 7),
+    "tensor": ("aibe.agents.ai_ml.tensor", "Tensor", 7),
+    "neural": ("aibe.agents.ai_ml.neural", "Neural", 7),
+    "optimus": ("aibe.agents.ai_ml.optimus", "Optimus", 7),
     # Tier 8 — Security
     "sentinel": ("aibe.agents.security.sentinel", "Sentinel", 8),
     "auditor": ("aibe.agents.security.auditor", "Auditor", 8),
@@ -74,6 +73,7 @@ AGENT_CATALOG: dict[str, tuple[str, str, int]] = {
 def _import_agent_class(module_path: str, class_name: str) -> Type[BaseAgent]:
     """Dynamically import an agent class."""
     import importlib
+
     module = importlib.import_module(module_path)
     return getattr(module, class_name)
 
@@ -96,11 +96,9 @@ def create_agent(
     """
     if agent_id not in AGENT_CATALOG:
         raise ValueError(f"Unknown agent: {agent_id}. Available: {list(AGENT_CATALOG.keys())}")
-
     module_path, class_name, _ = AGENT_CATALOG[agent_id]
     agent_cls = _import_agent_class(module_path, class_name)
     agent = agent_cls(ctx)
-
     logger.info("Agent created", agent_id=agent_id, class_name=class_name)
     return agent
 

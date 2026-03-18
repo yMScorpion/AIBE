@@ -27,4 +27,4 @@ USER aibe
 
 EXPOSE 8000
 
-CMD ["uvicorn", "aibe.ui.backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "aibe.ui.backend.app:app", "--host", "0.0.0.0", "--port", "8000"]

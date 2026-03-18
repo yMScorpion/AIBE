@@ -1,1 +1,1 @@
-"""Tier 7 — AI/ML agents (Cipher, Tensor, Neural, Optimus, Automata)."""
+"""Tier 7 — AI/ML agents (Cipher, Tensor, Neural, Optimus)."""

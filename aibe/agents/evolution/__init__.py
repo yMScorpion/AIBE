@@ -1,1 +1,1 @@
-"""Tier 6 — Evolution agents (Darwin, Synth)."""
+"""Tier 6 — Evolution agents (Darwin, Synth, Automata)."""

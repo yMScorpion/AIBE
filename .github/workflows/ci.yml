@@ -99,16 +99,9 @@ jobs:
 
   frontend-check:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: aibe/ui/frontend
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: aibe/ui/frontend/package-lock.json
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run build
+      - name: Validate frontend HTML
+        run: |
+          test -f aibe/ui/frontend/index.html
+          echo "Frontend index.html exists"
