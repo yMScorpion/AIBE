@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        run: pip install uv
+      - name: Install dependencies
+        run: uv pip install --system -e ".[dev]"
+      - name: Ruff lint
+        run: ruff check aibe/ tests/
+      - name: Black format check
+        run: black --check aibe/ tests/
+      - name: Mypy type check
+        run: mypy aibe/ --config-file mypy.ini
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint-and-type-check
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: aibe
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: aibe_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      nats:
+        image: nats:2.10-alpine
+        ports:
+          - 4222:4222
+        options: >-
+          --health-cmd "wget --spider -q http://localhost:8222/healthz || true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        run: pip install uv
+      - name: Install dependencies
+        run: uv pip install --system -e ".[dev,security,ml]"
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://aibe:testpass@localhost:5432/aibe_test
+          REDIS_URL: redis://localhost:6379/0
+          NATS_URL: nats://localhost:4222
+          ENVIRONMENT: test
+        run: pytest tests/unit/ -x -q --cov=aibe --cov-report=xml
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: coverage.xml
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: lint-and-type-check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        run: pip install uv
+      - name: Install dependencies
+        run: uv pip install --system -e ".[dev,security]"
+      - name: Bandit security scan
+        run: bandit -r aibe/ -c pyproject.toml -f json -o bandit-report.json || true
+      - name: Gitleaks secrets scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  frontend-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: aibe/ui/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: aibe/ui/frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build

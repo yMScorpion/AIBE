@@ -1,0 +1,38 @@
+line-length = 88
+target-version = "py312"
+
+[lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "TCH",  # flake8-type-checking
+    "RUF",  # ruff-specific
+    "S",    # flake8-bandit
+    "T20",  # flake8-print
+    "PTH",  # flake8-use-pathlib
+    "ERA",  # eradicate
+    "C4",   # flake8-comprehensions
+    "PIE",  # flake8-pie
+    "RET",  # flake8-return
+    "ASYNC",# flake8-async
+]
+
+ignore = [
+    "S101",   # assert allowed in tests
+    "S104",   # binding to all interfaces OK in containers
+    "B008",   # function calls in defaults (FastAPI Depends)
+    "RUF012", # mutable class variables
+]
+
+[lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "S106", "T20"]
+"aibe/scripts/**/*.py" = ["T20"]
+
+[lint.isort]
+known-first-party = ["aibe"]

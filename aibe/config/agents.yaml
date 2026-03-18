@@ -1,0 +1,389 @@
+# ═══════════════════════════════════════════════════════════════
+# AIBE v2.0 — Agent Configuration
+# Defines all 35 agents with their routing profiles and budgets
+# ═══════════════════════════════════════════════════════════════
+
+agents:
+  # ── Tier 0 — Executive ──────────────────────────────────────
+  oracle:
+    id: oracle
+    name: Oracle
+    tier: 0
+    description: "Chief executive. Discovers business, monitors KPIs, makes strategic decisions."
+    default_task_type: complex_reasoning
+    allowed_task_types: [complex_reasoning, deep_research, standard_reasoning]
+    daily_llm_budget_usd: 5.00
+
+  minerva:
+    id: minerva
+    name: Minerva
+    tier: 0
+    description: "Chief strategist. Business model canvas, OKR management, pivot proposals."
+    default_task_type: complex_reasoning
+    allowed_task_types: [complex_reasoning, deep_research, standard_reasoning, standard_generation]
+    daily_llm_budget_usd: 4.00
+
+  # ── Tier 1 — Research ───────────────────────────────────────
+  scout:
+    id: scout
+    name: Scout
+    tier: 1
+    description: "Market intelligence. Multi-source research pipeline."
+    default_task_type: deep_research
+    allowed_task_types: [deep_research, standard_reasoning, simple_extraction]
+    daily_llm_budget_usd: 3.00
+
+  vega:
+    id: vega
+    name: Vega
+    tier: 1
+    description: "Competitor intelligence. Deep-dive analysis on competitors."
+    default_task_type: deep_research
+    allowed_task_types: [deep_research, standard_reasoning, simple_extraction]
+    daily_llm_budget_usd: 3.00
+
+  pulse:
+    id: pulse
+    name: Pulse
+    tier: 1
+    description: "Hypothesis validator. Cross-references demand signals, competition, market size."
+    default_task_type: standard_reasoning
+    allowed_task_types: [standard_reasoning, deep_research, simple_classification]
+    daily_llm_budget_usd: 2.00
+
+  # ── Tier 2 — Product Development ────────────────────────────
+  forge:
+    id: forge
+    name: Forge
+    tier: 2
+    description: "Tech lead. Architecture design, sprint planning, tech debt monitoring."
+    default_task_type: complex_reasoning
+    allowed_task_types: [complex_reasoning, code_generation, standard_reasoning]
+    daily_llm_budget_usd: 4.00
+
+  ember:
+    id: ember
+    name: Ember
+    tier: 2
+    description: "Frontend engineer. UI component building, refactoring, optimization."
+    default_task_type: code_generation
+    allowed_task_types: [code_generation, standard_generation, standard_reasoning]
+    daily_llm_budget_usd: 3.00
+
+  flint:
+    id: flint
+    name: Flint
+    tier: 2
+    description: "Backend engineer. API endpoints, database schemas, auth flows."
+    default_task_type: code_generation
+    allowed_task_types: [code_generation, standard_reasoning, complex_reasoning]
+    daily_llm_budget_usd: 3.00
+
+  cinder:
+    id: cinder
+    name: Cinder
+    tier: 2
+    description: "DevOps/integration specialist. Third-party APIs, infra, payments."
+    default_task_type: code_generation
+    allowed_task_types: [code_generation, standard_reasoning, complex_reasoning]
+    daily_llm_budget_usd: 2.50
+
+  patch:
+    id: patch
+    name: Patch
+    tier: 2
+    description: "Bug fixer. Monitors Sentry, reproduces and fixes bugs."
+    default_task_type: code_generation
+    allowed_task_types: [code_generation, standard_reasoning]
+    daily_llm_budget_usd: 2.00
+
+  deploy:
+    id: deploy
+    name: Deploy
+    tier: 2
+    description: "Release manager. Staging/production deployments, rollbacks."
+    default_task_type: standard_reasoning
+    allowed_task_types: [standard_reasoning, code_generation]
+    daily_llm_budget_usd: 1.50
+
+  # ── Tier 3 — Marketing ──────────────────────────────────────
+  helix:
+    id: helix
+    name: Helix
+    tier: 3
+    description: "Marketing director. Channel strategy, weekly performance reviews."
+    default_task_type: standard_reasoning
+    allowed_task_types: [standard_reasoning, standard_generation, deep_research]
+    daily_llm_budget_usd: 2.00
+
+  quill:
+    id: quill
+    name: Quill
+    tier: 3
+    description: "Content writer. Landing pages, blog posts, content calendars."
+    default_task_type: standard_generation
+    allowed_task_types: [standard_generation, standard_reasoning]
+    daily_llm_budget_usd: 2.50
+
+  lumen:
+    id: lumen
+    name: Lumen
+    tier: 3
+    description: "SEO specialist. Keyword research, on-page audit, rank tracking."
+    default_task_type: deep_research
+    allowed_task_types: [deep_research, standard_reasoning, simple_extraction]
+    daily_llm_budget_usd: 2.00
+
+  volt:
+    id: volt
+    name: Volt
+    tier: 3
+    description: "Paid ads manager. Campaign launch, optimization, budget control."
+    default_task_type: standard_reasoning
+    allowed_task_types: [standard_reasoning, simple_classification, standard_generation]
+    daily_llm_budget_usd: 1.50
+
+  prism:
+    id: prism
+    name: Prism
+    tier: 3
+    description: "Email marketing specialist. Drip sequences, broadcasts, A/B testing."
+    default_task_type: standard_generation
+    allowed_task_types: [standard_generation, standard_reasoning, simple_classification]
+    daily_llm_budget_usd: 1.50
+
+  # ── Tier 4 — Social Media ───────────────────────────────────
+  nova:
+    id: nova
+    name: Nova
+    tier: 4
+    description: "Social media director. Content calendars, brand voice, performance reviews."
+    default_task_type: standard_reasoning
+    allowed_task_types: [standard_reasoning, standard_generation]
+    daily_llm_budget_usd: 1.50
+
+  spark:
+    id: spark
+    name: Spark
+    tier: 4
+    description: "Twitter/X specialist. Tweet threads, trending replies."
+    default_task_type: standard_generation
+    allowed_task_types: [standard_generation, simple_classification]
+    daily_llm_budget_usd: 1.00
+
+  bloom:
+    id: bloom
+    name: Bloom
+    tier: 4
+    description: "Visual content creator. Instagram posts, TikTok scripts."
+    default_task_type: standard_generation
+    allowed_task_types: [standard_generation, standard_reasoning]
+    daily_llm_budget_usd: 1.50
+
+  grove:
+    id: grove
+    name: Grove
+    tier: 4
+    description: "LinkedIn specialist. Professional posts, articles, B2B content."
+    default_task_type: standard_generation
+    allowed_task_types: [standard_generation, standard_reasoning]
+    daily_llm_budget_usd: 1.00
+
+  echo:
+    id: echo
+    name: Echo
+    tier: 4
+    description: "Community manager. Monitors all platforms, classifies and responds."
+    default_task_type: simple_classification
+    allowed_task_types: [simple_classification, standard_generation, simple_extraction]
+    daily_llm_budget_usd: 1.50
+
+  # ── Tier 5 — Finance & Operations ───────────────────────────
+  ledger:
+    id: ledger
+    name: Ledger
+    tier: 5
+    description: "CFO agent. Revenue tracking, expense tracking, P&L, budget enforcement."
+    default_task_type: standard_reasoning
+    allowed_task_types: [standard_reasoning, simple_extraction, simple_classification]
+    daily_llm_budget_usd: 2.00
+
+  atlas:
+    id: atlas
+    name: Atlas
+    tier: 5
+    description: "Operations manager. API health, uptime, licenses, compliance."
+    default_task_type: standard_reasoning
+    allowed_task_types: [standard_reasoning, simple_extraction]
+    daily_llm_budget_usd: 1.50
+
+  procurator:
+    id: procurator
+    name: Procurator
+    tier: 5
+    description: "Procurement/contractor manager. Validates, sources, manages contractors."
+    default_task_type: standard_reasoning
+    allowed_task_types: [standard_reasoning, standard_generation, deep_research]
+    daily_llm_budget_usd: 1.50
+
+  # ── Tier 6 — Evolution ──────────────────────────────────────
+  darwin:
+    id: darwin
+    name: Darwin
+    tier: 6
+    description: "System analyst. Detects patterns, proposes tools and improvements."
+    default_task_type: complex_reasoning
+    allowed_task_types: [complex_reasoning, deep_research, standard_reasoning]
+    daily_llm_budget_usd: 3.00
+
+  synth:
+    id: synth
+    name: Synth
+    tier: 6
+    description: "Tool builder. Writes, tests, documents, and registers new tools."
+    default_task_type: code_generation
+    allowed_task_types: [code_generation, standard_reasoning]
+    daily_llm_budget_usd: 3.00
+
+  # ── Tier 7 — AI/ML ──────────────────────────────────────────
+  cipher:
+    id: cipher
+    name: Cipher
+    tier: 7
+    description: "ML strategist. Opportunity scanning, proposal generation, ROI tracking."
+    default_task_type: complex_reasoning
+    allowed_task_types: [complex_reasoning, deep_research, ml_design]
+    daily_llm_budget_usd: 3.00
+
+  tensor:
+    id: tensor
+    name: Tensor
+    tier: 7
+    description: "Data engineer. ETL pipelines, feature stores, data quality."
+    default_task_type: code_generation
+    allowed_task_types: [code_generation, standard_reasoning, ml_design]
+    daily_llm_budget_usd: 2.50
+
+  neural:
+    id: neural
+    name: Neural
+    tier: 7
+    description: "ML engineer. Model training, evaluation, deployment."
+    default_task_type: ml_design
+    allowed_task_types: [ml_design, code_generation, complex_reasoning]
+    daily_llm_budget_usd: 3.00
+
+  optimus:
+    id: optimus
+    name: Optimus
+    tier: 7
+    description: "ML ops. Production inference, monitoring, feature-to-prediction pipelines."
+    default_task_type: code_generation
+    allowed_task_types: [code_generation, standard_reasoning, ml_design]
+    daily_llm_budget_usd: 2.00
+
+  automata:
+    id: automata
+    name: Automata
+    tier: 7
+    description: "Process automation. Discovers repetitive processes, builds automations."
+    default_task_type: standard_reasoning
+    allowed_task_types: [standard_reasoning, code_generation]
+    daily_llm_budget_usd: 1.50
+
+  # ── Tier 8 — Cybersecurity ──────────────────────────────────
+  sentinel:
+    id: sentinel
+    name: Sentinel
+    tier: 8
+    description: "CISO agent. Security dashboard, remediation tracking, deploy gates."
+    default_task_type: security_analysis
+    allowed_task_types: [security_analysis, standard_reasoning, complex_reasoning]
+    daily_llm_budget_usd: 2.50
+
+  vault_keeper:
+    id: vault_keeper
+    name: VaultKeeper
+    tier: 8
+    description: "Secrets manager. Rotation scheduling, access audits, leak response."
+    default_task_type: security_analysis
+    allowed_task_types: [security_analysis, standard_reasoning]
+    daily_llm_budget_usd: 1.50
+
+  auditor:
+    id: auditor
+    name: Auditor
+    tier: 8
+    description: "Security scanner. Commit scans, infra scans, remediation verification."
+    default_task_type: security_analysis
+    allowed_task_types: [security_analysis, code_generation, standard_reasoning]
+    daily_llm_budget_usd: 3.00
+
+  penetest:
+    id: penetest
+    name: Penetest
+    tier: 8
+    description: "Penetration tester. Web/API/infra/business logic testing. OWASP Top 10."
+    default_task_type: security_analysis
+    allowed_task_types: [security_analysis, code_generation, complex_reasoning]
+    daily_llm_budget_usd: 3.00
+
+  incident_responder:
+    id: incident_responder
+    name: IncidentResponder
+    tier: 8
+    description: "24/7 incident response. Monitors Wazuh/Cloudflare/Sentry, runs playbooks."
+    default_task_type: security_analysis
+    allowed_task_types: [security_analysis, standard_reasoning, complex_reasoning]
+    daily_llm_budget_usd: 2.00
+
+  # ── Tier 9 — Sales (Conditional) ────────────────────────────
+  mercury:
+    id: mercury
+    name: Mercury
+    tier: 9
+    description: "Sales activation engine. Evaluates business model, activates/deactivates team."
+    default_task_type: standard_reasoning
+    allowed_task_types: [standard_reasoning, simple_classification]
+    daily_llm_budget_usd: 0.50
+    starts_dormant: true
+
+  closer:
+    id: closer
+    name: Closer
+    tier: 9
+    description: "Outbound sales. 4-touchpoint outreach sequences, CRM tracking."
+    default_task_type: standard_generation
+    allowed_task_types: [standard_generation, standard_reasoning, deep_research]
+    daily_llm_budget_usd: 2.00
+    starts_dormant: true
+
+  orator:
+    id: orator
+    name: Orator
+    tier: 9
+    description: "Inbound sales. Lead handling, qualification, demo scheduling."
+    default_task_type: standard_generation
+    allowed_task_types: [standard_generation, standard_reasoning, simple_classification]
+    daily_llm_budget_usd: 2.00
+    starts_dormant: true
+
+  guardian:
+    id: guardian
+    name: Guardian
+    tier: 9
+    description: "Customer support. Handles 7 interaction types, escalates to humans."
+    default_task_type: standard_generation
+    allowed_task_types: [standard_generation, simple_classification, standard_reasoning]
+    daily_llm_budget_usd: 2.00
+    starts_dormant: true
+
+  escalator:
+    id: escalator
+    name: Escalator
+    tier: 9
+    description: "Human escalation specialist. Builds handoff packages, notifies via Slack/email."
+    default_task_type: standard_generation
+    allowed_task_types: [standard_generation, standard_reasoning]
+    daily_llm_budget_usd: 1.00
+    starts_dormant: true

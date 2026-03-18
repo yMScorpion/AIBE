@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIBE — AI Business Engine Dashboard</title>
+  <meta name="description" content="Real-time dashboard for 40 autonomous AI agents running your AI-native company">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & Variables ─────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-card: #16161f;
+      --bg-card-hover: #1c1c28;
+      --bg-glass: rgba(22, 22, 31, 0.85);
+
+      --border: #1e1e2d;
+      --border-glow: rgba(99, 102, 241, 0.3);
+
+      --text-primary: #e8e8f0;
+      --text-secondary: #8b8ba3;
+      --text-muted: #5c5c72;
+
+      --accent-purple: #7c3aed;
+      --accent-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-pink: #ec4899;
+
+      --gradient-hero: linear-gradient(135deg, #7c3aed 0%, #3b82f6 50%, #06b6d4 100%);
+      --gradient-card: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(59,130,246,0.05));
+
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
+      --shadow-glow: 0 0 30px rgba(124,58,237,0.15);
+
+      --radius: 12px;
+      --radius-lg: 16px;
+
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background Grid ──────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124,58,237,0.08) 0%, transparent 70%),
+        radial-gradient(circle at 80% 80%, rgba(6,182,212,0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Layout ────────────────────────────────── */
+    .app { position: relative; z-index: 1; }
+
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ── Header ────────────────────────────────── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      background: rgba(10,10,15,0.8);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 0;
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--gradient-hero);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+      color: white;
+      box-shadow: var(--shadow-glow);
+    }
+
+    .logo h1 {
+      font-size: 20px;
+      font-weight: 700;
+      background: var(--gradient-hero);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .logo span {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.2);
+      font-size: 13px;
+      color: var(--accent-green);
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+      50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+    }
+
+    .ws-status {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* ── KPI Strip ─────────────────────────────── */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      padding: 24px 0;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .kpi-card:nth-child(1)::before { background: var(--accent-purple); }
+    .kpi-card:nth-child(2)::before { background: var(--accent-blue); }
+    .kpi-card:nth-child(3)::before { background: var(--accent-green); }
+    .kpi-card:nth-child(4)::before { background: var(--accent-cyan); }
+    .kpi-card:nth-child(5)::before { background: var(--accent-amber); }
+    .kpi-card:nth-child(6)::before { background: var(--accent-pink); }
+
+    .kpi-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-glow);
+      box-shadow: var(--shadow-glow);
+      transform: translateY(-2px);
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      margin-bottom: 4px;
+    }
+
+    .kpi-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .kpi-trend-up { color: var(--accent-green); }
+    .kpi-trend-down { color: var(--accent-red); }
+
+    /* ── Main Grid ─────────────────────────────── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+      padding-bottom: 48px;
+    }
+
+    @media (max-width: 1024px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Panel ─────────────────────────────────── */
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-title {
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(124,58,237,0.15);
+      color: var(--accent-purple);
+      font-family: var(--font-mono);
+    }
+
+    .panel-body { padding: 16px 20px; }
+
+    /* ── Agent Grid ────────────────────────────── */
+    .tier-section { margin-bottom: 24px; }
+
+    .tier-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      padding-left: 4px;
+    }
+
+    .agent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    .agent-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: var(--bg-secondary);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .agent-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-glow);
+      transform: translateX(3px);
+    }
+
+    .agent-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .agent-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .agent-name {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .agent-role {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .agent-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-active { background: var(--accent-green); box-shadow: 0 0 6px rgba(16,185,129,0.4); }
+    .status-idle { background: var(--accent-amber); }
+    .status-offline { background: var(--text-muted); }
+
+    /* ── Event Feed ────────────────────────────── */
+    .event-feed {
+      max-height: 600px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .event-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(30,30,45,0.5);
+      animation: fadeInUp 0.3s ease;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .event-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .event-content { flex: 1; min-width: 0; }
+
+    .event-title {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .event-detail {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .event-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      white-space: nowrap;
+    }
+
+    /* ── Cost Bars ─────────────────────────────── */
+    .cost-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(30,30,45,0.3);
+    }
+
+    .cost-label {
+      font-size: 13px;
+      font-weight: 500;
+      width: 80px;
+      flex-shrink: 0;
+    }
+
+    .cost-bar-bg {
+      flex: 1;
+      height: 8px;
+      border-radius: 4px;
+      background: var(--bg-secondary);
+      overflow: hidden;
+    }
+
+    .cost-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.6s ease;
+    }
+
+    .cost-amount {
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      width: 70px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* ── Meeting Section ───────────────────────── */
+    .meeting-card {
+      padding: 14px;
+      border-radius: 10px;
+      background: var(--bg-secondary);
+      margin-bottom: 10px;
+      border-left: 3px solid;
+      transition: all 0.2s ease;
+    }
+
+    .meeting-card:hover {
+      background: var(--bg-card-hover);
+      transform: translateX(3px);
+    }
+
+    .meeting-type {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .meeting-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* ── Tabs ──────────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 2px;
+      padding: 4px;
+      background: var(--bg-secondary);
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: center;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      border: none;
+      background: none;
+    }
+
+    .tab.active {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tab:hover:not(.active) { color: var(--text-secondary); }
+
+    /* ── Utility ───────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-glow);
+    }
+
+    .btn-primary {
+      background: var(--accent-purple);
+      border-color: var(--accent-purple);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #6d28d9;
+      box-shadow: 0 0 20px rgba(124,58,237,0.3);
+    }
+
+    /* ── Scrollbar ─────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── Header ──────────────────────────────── -->
+  <header>
+    <div class="container header-inner">
+      <div class="logo">
+        <div class="logo-icon">AI</div>
+        <div>
+          <h1>AIBE</h1>
+          <span>AI Business Engine v2.0</span>
+        </div>
+      </div>
+      <div class="header-status">
+        <div class="status-pill">
+          <div class="status-dot"></div>
+          <span id="system-status">System Online</span>
+        </div>
+        <div class="ws-status" id="ws-status">ws: connecting…</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- ── KPI Strip ────────────────────────────── -->
+    <div class="kpi-strip">
+      <div class="kpi-card">
+        <div class="kpi-label">Active Agents</div>
+        <div class="kpi-value" id="kpi-agents">40</div>
+        <div class="kpi-sub">across 10 tiers</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Tasks Active</div>
+        <div class="kpi-value" id="kpi-tasks">0</div>
+        <div class="kpi-sub">in-progress right now</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Today's LLM Spend</div>
+        <div class="kpi-value" id="kpi-spend">$0.00</div>
+        <div class="kpi-sub">of <span id="kpi-budget">$50.00</span> budget</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Meetings Today</div>
+        <div class="kpi-value" id="kpi-meetings">0</div>
+        <div class="kpi-sub">strategy + operational</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Events / min</div>
+        <div class="kpi-value" id="kpi-events">0</div>
+        <div class="kpi-sub">bus messages</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Security Score</div>
+        <div class="kpi-value kpi-trend-up" id="kpi-security">A+</div>
+        <div class="kpi-sub">0 active threats</div>
+      </div>
+    </div>
+
+    <!-- ── Main Grid ────────────────────────────── -->
+    <div class="main-grid">
+
+      <!-- Left: Agent Overview -->
+      <div>
+        <div class="panel" style="margin-bottom: 24px;">
+          <div class="panel-header">
+            <div class="panel-title">
+              🤖 Agent Fleet
+              <span class="panel-badge">40 agents</span>
+            </div>
+            <button class="btn" onclick="refreshAgents()">↻ Refresh</button>
+          </div>
+          <div class="panel-body" id="agent-fleet">
+            <!-- Agent tiers rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Cost Breakdown -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">💰 Daily Cost Breakdown</div>
+            <span class="panel-badge" id="cost-total">$0.00</span>
+          </div>
+          <div class="panel-body" id="cost-breakdown">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Event Feed + Meetings -->
+      <div>
+        <div class="panel" style="margin-bottom: 24px;">
+          <div class="panel-header">
+            <div class="panel-title">⚡ Live Events</div>
+            <span class="panel-badge" id="event-count">0</span>
+          </div>
+          <div class="panel-body">
+            <div class="event-feed" id="event-feed">
+              <div class="empty-state">
+                <div style="font-size: 32px; margin-bottom: 8px;">⚡</div>
+                <div>Waiting for events…</div>
+                <div style="font-size: 11px; margin-top: 4px;">Events stream in real-time via WebSocket</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">📅 Scheduled Meetings</div>
+          </div>
+          <div class="panel-body" id="meetings-panel">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Configuration ──────────────────────────────────────────
+const API_BASE = location.hostname === 'localhost'
+  ? `http://localhost:8000/api`
+  : `/api`;
+
+const WS_URL = location.hostname === 'localhost'
+  ? `ws://localhost:8000/ws/events`
+  : `ws://${location.host}/ws/events`;
+
+// ── Agent Data ─────────────────────────────────────────────
+const TIERS = [
+  { id: 0, name: 'Executive', color: '#7c3aed', agents: [
+    { id: 'oracle', name: 'Oracle', role: 'CEO / Strategic Director' },
+    { id: 'minerva', name: 'Minerva', role: 'COO / Operations Director' },
+  ]},
+  { id: 1, name: 'Research', color: '#3b82f6', agents: [
+    { id: 'scout', name: 'Scout', role: 'Market Researcher' },
+    { id: 'vega', name: 'Vega', role: 'Data Analyst' },
+    { id: 'pulse', name: 'Pulse', role: 'Trend Tracker' },
+  ]},
+  { id: 2, name: 'Product', color: '#06b6d4', agents: [
+    { id: 'forge', name: 'Forge', role: 'Tech Lead / Architect' },
+    { id: 'ember', name: 'Ember', role: 'Backend Developer' },
+    { id: 'flint', name: 'Flint', role: 'Frontend Developer' },
+    { id: 'cinder', name: 'Cinder', role: 'Mobile Developer' },
+    { id: 'patch', name: 'Patch', role: 'QA Engineer' },
+    { id: 'deploy', name: 'Deploy', role: 'DevOps / SRE' },
+  ]},
+  { id: 3, name: 'Marketing', color: '#10b981', agents: [
+    { id: 'helix', name: 'Helix', role: 'CMO / Strategy' },
+    { id: 'quill', name: 'Quill', role: 'Content Writer' },
+    { id: 'lumen', name: 'Lumen', role: 'SEO Specialist' },
+    { id: 'volt', name: 'Volt', role: 'Performance Marketing' },
+    { id: 'prism', name: 'Prism', role: 'Brand Manager' },
+  ]},
+  { id: 4, name: 'Social', color: '#f59e0b', agents: [
+    { id: 'nova', name: 'Nova', role: 'Social Media Lead' },
+    { id: 'spark', name: 'Spark', role: 'Short-form Creator' },
+    { id: 'bloom', name: 'Bloom', role: 'Community Manager' },
+    { id: 'grove', name: 'Grove', role: 'Influencer Relations' },
+    { id: 'echo', name: 'Echo', role: 'Analytics Tracker' },
+  ]},
+  { id: 5, name: 'Finance', color: '#8b5cf6', agents: [
+    { id: 'ledger', name: 'Ledger', role: 'CFO / Finance Lead' },
+    { id: 'atlas', name: 'Atlas', role: 'Budget & Forecasting' },
+  ]},
+  { id: 6, name: 'AI / ML', color: '#ec4899', agents: [
+    { id: 'cipher', name: 'Cipher', role: 'ML Engineer' },
+    { id: 'tensor', name: 'Tensor', role: 'Model Trainer' },
+    { id: 'neural', name: 'Neural', role: 'Embeddings / RAG' },
+    { id: 'optimus', name: 'Optimus', role: 'Prompt Optimizer' },
+  ]},
+  { id: 7, name: 'Evolution', color: '#14b8a6', agents: [
+    { id: 'darwin', name: 'Darwin', role: 'Self-Improvement' },
+    { id: 'synth', name: 'Synth', role: 'Agent Generator' },
+    { id: 'automata', name: 'Automata', role: 'Workflow Automation' },
+  ]},
+  { id: 8, name: 'Security', color: '#ef4444', agents: [
+    { id: 'sentinel', name: 'Sentinel', role: 'CISO / Security Lead' },
+    { id: 'auditor', name: 'Auditor', role: 'Code Auditor' },
+    { id: 'vault_keeper', name: 'VaultKeeper', role: 'Secrets Manager' },
+    { id: 'penetest', name: 'Penetest', role: 'Pen Tester' },
+    { id: 'incident_responder', name: 'IncidentResponder', role: 'Incident Response' },
+  ]},
+  { id: 9, name: 'Sales', color: '#f97316', agents: [
+    { id: 'mercury', name: 'Mercury', role: 'Sales Director' },
+    { id: 'closer', name: 'Closer', role: 'Deal Closer' },
+    { id: 'orator', name: 'Orator', role: 'Demo Presenter' },
+    { id: 'guardian', name: 'Guardian', role: 'Customer Success' },
+    { id: 'escalator', name: 'Escalator', role: 'Upsell / Expansion' },
+  ]},
+];
+
+// ── State ──────────────────────────────────────────────────
+let events = [];
+let agentStatuses = {};
+let ws = null;
+let eventCount = 0;
+
+// ── Render Agent Fleet ─────────────────────────────────────
+function renderAgentFleet() {
+  const container = document.getElementById('agent-fleet');
+  container.innerHTML = TIERS.map(tier => `
+    <div class="tier-section">
+      <div class="tier-label" style="color: ${tier.color}">
+        Tier ${tier.id} — ${tier.name}
+      </div>
+      <div class="agent-grid">
+        ${tier.agents.map(agent => {
+          const status = agentStatuses[agent.id] || 'active';
+          return `
+            <div class="agent-card" onclick="selectAgent('${agent.id}')">
+              <div class="agent-avatar" style="background: ${tier.color}">
+                ${agent.name.charAt(0)}
+              </div>
+              <div class="agent-info">
+                <div class="agent-name">${agent.name}</div>
+                <div class="agent-role">${agent.role}</div>
+              </div>
+              <div class="agent-status-dot status-${status}"></div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Render Cost Breakdown ──────────────────────────────────
+function renderCostBreakdown(costs) {
+  const container = document.getElementById('cost-breakdown');
+  const maxCost = Math.max(...costs.map(c => c.amount), 1);
+  const total = costs.reduce((s, c) => s + c.amount, 0);
+
+  document.getElementById('cost-total').textContent = `$${total.toFixed(2)}`;
+
+  container.innerHTML = costs.map(c => {
+    const pct = (c.amount / maxCost * 100).toFixed(0);
+    return `
+      <div class="cost-row">
+        <div class="cost-label">${c.label}</div>
+        <div class="cost-bar-bg">
+          <div class="cost-bar-fill" style="width: ${pct}%; background: ${c.color}"></div>
+        </div>
+        <div class="cost-amount">$${c.amount.toFixed(2)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── Render Meetings ────────────────────────────────────────
+function renderMeetings(meetings) {
+  const container = document.getElementById('meetings-panel');
+  if (!meetings.length) {
+    container.innerHTML = '<div class="empty-state"><div>No meetings scheduled</div></div>';
+    return;
+  }
+
+  const colors = {
+    strategy_summit: '#7c3aed',
+    sprint_planning: '#3b82f6',
+    security_standup: '#ef4444',
+    budget_review: '#f59e0b',
+    product_review: '#06b6d4',
+  };
+
+  container.innerHTML = meetings.map((m, i) => `
+    <div class="meeting-card" style="border-left-color: ${colors[m.type] || '#6366f1'}">
+      <div class="meeting-type">${m.title}</div>
+      <div class="meeting-meta">${m.participants} participants · ${m.time}</div>
+    </div>
+  `).join('');
+}
+
+// ── Add Event to Feed ──────────────────────────────────────
+function addEvent(event) {
+  eventCount++;
+  document.getElementById('event-count').textContent = eventCount;
+
+  const feed = document.getElementById('event-feed');
+  if (feed.querySelector('.empty-state')) feed.innerHTML = '';
+
+  const icons = {
+    task_assigned: { icon: '📋', bg: 'rgba(59,130,246,0.15)' },
+    task_completed: { icon: '✅', bg: 'rgba(16,185,129,0.15)' },
+    agent_status_change: { icon: '🔄', bg: 'rgba(124,58,237,0.15)' },
+    meeting_update: { icon: '📅', bg: 'rgba(245,158,11,0.15)' },
+    budget_alert: { icon: '💰', bg: 'rgba(239,68,68,0.15)' },
+    security_alert: { icon: '🛡️', bg: 'rgba(239,68,68,0.15)' },
+    heartbeat: { icon: '💓', bg: 'rgba(16,185,129,0.1)' },
+  };
+
+  const config = icons[event.type] || { icon: '⚡', bg: 'rgba(99,102,241,0.15)' };
+  const time = new Date(event.timestamp || Date.now()).toLocaleTimeString();
+
+  const el = document.createElement('div');
+  el.className = 'event-item';
+  el.innerHTML = `
+    <div class="event-icon" style="background: ${config.bg}">${config.icon}</div>
+    <div class="event-content">
+      <div class="event-title">${event.title || event.type}</div>
+      <div class="event-detail">${event.detail || ''}</div>
+    </div>
+    <div class="event-time">${time}</div>
+  `;
+
+  feed.insertBefore(el, feed.firstChild);
+
+  // Keep max 50 events in DOM
+  while (feed.children.length > 50) feed.removeChild(feed.lastChild);
+}
+
+// ── WebSocket Connection ───────────────────────────────────
+function connectWebSocket() {
+  const statusEl = document.getElementById('ws-status');
+
+  try {
+    ws = new WebSocket(WS_URL);
+
+    ws.onopen = () => {
+      statusEl.textContent = 'ws: connected';
+      statusEl.style.color = '#10b981';
+      ws.send(JSON.stringify({ type: 'subscribe', topics: ['*'] }));
+    };
+
+    ws.onmessage = (e) => {
+      try {
+        const event = JSON.parse(e.data);
+        if (event.type === 'pong') return;
+        addEvent(event);
+
+        // Update agent status if applicable
+        if (event.type === 'agent_status_change' && event.agent_id) {
+          agentStatuses[event.agent_id] = event.new_status;
+          renderAgentFleet();
+        }
+      } catch (_) {}
+    };
+
+    ws.onclose = () => {
+      statusEl.textContent = 'ws: disconnected';
+      statusEl.style.color = '#ef4444';
+      setTimeout(connectWebSocket, 3000);
+    };
+
+    ws.onerror = () => {
+      statusEl.textContent = 'ws: error';
+      statusEl.style.color = '#f59e0b';
+    };
+  } catch (_) {
+    statusEl.textContent = 'ws: unavailable';
+    statusEl.style.color = '#5c5c72';
+  }
+}
+
+// ── API Calls ──────────────────────────────────────────────
+async function fetchData(path) {
+  try {
+    const res = await fetch(`${API_BASE}${path}`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (_) { return null; }
+}
+
+async function refreshAgents() {
+  const data = await fetchData('/agents/');
+  if (data && data.agents) {
+    data.agents.forEach(a => { agentStatuses[a.agent_id] = a.status || 'active'; });
+    renderAgentFleet();
+  }
+}
+
+async function refreshCosts() {
+  const data = await fetchData('/costs/summary');
+  if (data) {
+    document.getElementById('kpi-spend').textContent = `$${(data.llm_spend_usd || 0).toFixed(2)}`;
+    document.getElementById('kpi-budget').textContent = `$${(data.llm_budget_usd || 50).toFixed(2)}`;
+  }
+}
+
+function selectAgent(agentId) {
+  addEvent({
+    type: 'agent_selected',
+    title: `Selected agent: ${agentId}`,
+    detail: 'Agent detail panel coming soon',
+    timestamp: new Date().toISOString(),
+  });
+}
+
+// ── Initialize ─────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Render static data immediately
+  renderAgentFleet();
+
+  // Default cost breakdown (updates from API)
+  renderCostBreakdown([
+    { label: 'Product', amount: 0, color: '#06b6d4' },
+    { label: 'Research', amount: 0, color: '#3b82f6' },
+    { label: 'Marketing', amount: 0, color: '#10b981' },
+    { label: 'AI/ML', amount: 0, color: '#ec4899' },
+    { label: 'Security', amount: 0, color: '#ef4444' },
+    { label: 'Executive', amount: 0, color: '#7c3aed' },
+  ]);
+
+  // Default meetings
+  renderMeetings([
+    { type: 'strategy_summit', title: 'Morning Strategy Summit', participants: 5, time: '09:00' },
+    { type: 'sprint_planning', title: 'Sprint Planning', participants: 8, time: '10:30' },
+    { type: 'security_standup', title: 'Security Standup', participants: 5, time: '11:00' },
+    { type: 'product_review', title: 'Product Review', participants: 7, time: '14:00' },
+  ]);
+
+  // Connect WebSocket
+  connectWebSocket();
+
+  // Attempt API calls (won't fail if backend is down)
+  refreshAgents();
+  refreshCosts();
+
+  // Periodic refresh
+  setInterval(refreshCosts, 30000);
+  setInterval(refreshAgents, 60000);
+
+  // Simulated heartbeat events
+  setInterval(() => {
+    const agents = TIERS.flatMap(t => t.agents);
+    const agent = agents[Math.floor(Math.random() * agents.length)];
+    addEvent({
+      type: 'heartbeat',
+      title: `${agent.name} heartbeat`,
+      detail: `Status: active · Tier ${TIERS.find(t => t.agents.includes(agent))?.id}`,
+      timestamp: new Date().toISOString(),
+    });
+  }, 5000);
+});
+</script>
+</body>
+</html>
