@@ -1,29 +1,30 @@
-"""Penetest — Penetration Tester Agent. Tier: 8 (Security)."""
+# aibe/agents/security/penetest.py
+"""Penetest — Penetration Testing Agent (Tier 8)."""
 
 from __future__ import annotations
-from typing import Any
+
 from aibe.agents.base.agent import BaseAgent
-from aibe.core.message_bus.models import TaskAssignMessage
-from aibe.core.types import ModelTaskType
 
 
-class Penetest(BaseAgent):
-    """Penetration tester — OWASP Top 10, API fuzzing, auth testing."""
+class PenetestAgent(BaseAgent):
+    agent_id = "penetest"
+    name = "Penetest"
+    tier = 8
+    escalation_target = "sentinel"
+    daily_budget_usd = 2.0
+
+    def __init__(self, context=None):
+        super().__init__(context)
+        self.register_handler(f"tasks.assign.{self.agent_id}", self._handle_task)
 
     def get_system_prompt(self) -> str:
-        return """You are Penetest, the Penetration Tester of AIBE.
-ROLE: You perform security testing against AIBE's own systems.
-SCOPE: OWASP Top 10, API security, authentication/authorization,
-injection attacks, CSRF, XSS, IDOR, rate limiting, input validation.
-RULES: Only test against staging/sandbox environments. Never production.
-Report all findings to Sentinel immediately.
-OUTPUT: JSON with test_results, vulnerabilities, severity, and PoC_steps."""
-
-    async def on_task_receive(self, task: TaskAssignMessage) -> dict[str, Any]:
-        response = await self.think(
-            f"Penetration test: {task.title}\n{task.description}\nData: {task.input_data}",
-            task_type=ModelTaskType.SECURITY_ANALYSIS,
+        return (
+            "You are Penetest, a Penetration Testing Agent. "
+            "You test system defences, find weaknesses, and recommend fixes."
         )
-        return {"pentest_results": response}
 
-__all__ = ["Penetest"]
+    async def _handle_task(self, data: dict) -> None:
+        result = await self.on_task_receive(data)
+        bus = self._get_bus()
+        if bus:
+            await bus.publish(f"tasks.result.{data.get('task_id', 'unknown')}", result)

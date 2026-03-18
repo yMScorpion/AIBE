@@ -1,335 +1,207 @@
-"""Base agent abstract class — the foundation all 35 agents inherit from.
-
-Provides the full lifecycle: start, stop, task loop, LLM calls,
-memory I/O, browser access, VM execution, task delegation, and
-escalation.
-"""
+# aibe/agents/base/agent.py
+"""Base agent class with autonomous loop support."""
 
 from __future__ import annotations
 
 import asyncio
+import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Optional
-from uuid import uuid4
-
-from aibe.agents.base.context import AgentContext
-from aibe.agents.base.lifecycle import LifecycleManager
-from aibe.core.logging import bind_context, get_logger
-from aibe.core.memory.namespaces import agent_namespace
-from aibe.core.message_bus.models import (
-    AgentStatusChangedMessage,
-    EscalationMessage,
-    HeartbeatMessage,
-    TaskAssignMessage,
-    TaskResultMessage,
-)
-from aibe.core.message_bus.streams import SUBJECT_HEARTBEAT, SUBJECT_TASK_ASSIGN
-from aibe.core.types import AgentStatus, ModelTaskType, HEARTBEAT_INTERVAL_SECONDS
-
-logger = get_logger(__name__)
+from collections.abc import Callable
+from typing import Any
 
 
 class BaseAgent(ABC):
-    """Abstract base class for all AIBE agents.
+    """Abstract base for all AIBE agents."""
 
-    Subclasses MUST implement:
-        - get_system_prompt() → str
-        - on_task_receive(task: TaskAssignMessage) → dict[str, Any]
+    agent_id: str = "base"
+    name: str = "Base Agent"
+    tier: int = -1
+    escalation_target: str | None = None
+    daily_budget_usd: float = 1.0
 
-    Subclasses MAY override:
-        - autonomous_loops() → list of async coroutines to run
-    """
-
-    def __init__(self, ctx: AgentContext) -> None:
-        self.ctx = ctx
-        self._lifecycle = LifecycleManager(ctx.agent_id)
-        self._logger = get_logger(ctx.agent_id, agent_id=ctx.agent_id, tier=ctx.tier)
-        self._start_time = 0.0
-        self._tasks_completed = 0
-        self._error_count = 0
-        self._heartbeat_task: Optional[asyncio.Task[None]] = None
-        self._task_loop_task: Optional[asyncio.Task[None]] = None
+    def __init__(self, context: Any = None) -> None:
+        self._context = context
+        self._logger = logging.getLogger(f"aibe.agent.{self.agent_id}")
         self._running = False
+        self._start_time: float | None = None
+        self._tasks_completed: int = 0
+        self._error_count: int = 0
+        self._autonomous_tasks: list[asyncio.Task] = []
+        self._status = "initializing"
+        self._handlers: dict[str, Callable] = {}
 
-    # ── Properties ────────────────────────────────────────────
-
-    @property
-    def agent_id(self) -> str:
-        return self.ctx.agent_id
-
-    @property
-    def agent_name(self) -> str:
-        return self.ctx.agent_name
+    # --- Properties ----------------------------------------------------------
 
     @property
-    def status(self) -> AgentStatus:
-        return self._lifecycle.status
+    def status(self) -> str:
+        return self._status
 
-    @property
-    def uptime_seconds(self) -> float:
-        if self._start_time == 0.0:
-            return 0.0
-        return time.monotonic() - self._start_time
+    @status.setter
+    def status(self, value: str) -> None:
+        self._status = value
 
-    # ── Abstract methods (subclasses MUST implement) ──────────
+    # --- Abstract methods ----------------------------------------------------
 
     @abstractmethod
     def get_system_prompt(self) -> str:
-        """Return the system prompt for this agent's LLM calls."""
+        """Return the agent's system prompt."""
         ...
 
-    @abstractmethod
-    async def on_task_receive(self, task: TaskAssignMessage) -> dict[str, Any]:
-        """Handle an incoming task assignment.
-
-        Args:
-            task: The task to execute.
-
-        Returns:
-            Output data dict to include in TaskResultMessage.
-        """
-        ...
-
-    # ── Lifecycle ─────────────────────────────────────────────
+    # --- Lifecycle -----------------------------------------------------------
 
     async def start(self) -> None:
-        """Start the agent: transition to READY, begin heartbeat and task loop."""
-        self._lifecycle.transition(AgentStatus.READY, reason="Agent starting")
-        self._start_time = time.monotonic()
+        """Start the agent: subscribe to bus, launch autonomous loops."""
         self._running = True
+        self._start_time = time.time()
+        self._status = "ready"
+        self._logger.info("Agent %s starting", self.agent_id)
 
-        bind_context(agent_id=self.agent_id)
+        # Subscribe handlers to bus
+        bus = self._get_bus()
+        if bus is not None:
+            for subject, handler in self._handlers.items():
+                try:
+                    await bus.subscribe(subject, handler)
+                except Exception:
+                    self._logger.warning("Could not subscribe to %s", subject)
 
-        # Subscribe to task assignments
-        subject = SUBJECT_TASK_ASSIGN.format(agent_id=self.agent_id)
-        await self.ctx.bus.subscribe(
-            subject,
-            self._on_raw_task_message,
-            durable=f"agent-{self.agent_id}",
-        )
+        # Launch autonomous loops
+        for coro_fn, interval in self.autonomous_loops():
+            task = asyncio.create_task(self._loop_wrapper(coro_fn, interval))
+            self._autonomous_tasks.append(task)
 
-        # Start heartbeat
-        self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
-
-        self._logger.info("Agent started", agent_name=self.agent_name)
+        self._status = "running" if self._autonomous_tasks else "ready"
+        self._logger.info("Agent %s started (%d loops)", self.agent_id, len(self._autonomous_tasks))
 
     async def stop(self) -> None:
-        """Stop the agent gracefully."""
+        """Stop the agent and cancel all autonomous loops."""
         self._running = False
+        self._status = "stopped"
+        for task in self._autonomous_tasks:
+            if not task.done():
+                task.cancel()
+        if self._autonomous_tasks:
+            await asyncio.gather(*self._autonomous_tasks, return_exceptions=True)
+        self._autonomous_tasks.clear()
+        self._logger.info("Agent %s stopped", self.agent_id)
 
-        if self._heartbeat_task is not None:
-            self._heartbeat_task.cancel()
-            self._heartbeat_task = None
+    # --- Autonomous loops ----------------------------------------------------
 
-        if self._task_loop_task is not None:
-            self._task_loop_task.cancel()
-            self._task_loop_task = None
-
-        self._lifecycle.transition(AgentStatus.STOPPED, reason="Agent stopping")
-        self._logger.info("Agent stopped")
-
-    # ── Core capabilities ─────────────────────────────────────
-
-    async def think(
-        self,
-        prompt: str,
-        *,
-        task_type: Optional[ModelTaskType] = None,
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
-    ) -> str:
-        """Make an LLM call via the model router.
-
-        Args:
-            prompt: The user/task prompt.
-            task_type: Override task type for routing.
-            temperature: Override temperature.
-            max_tokens: Override max tokens.
-
-        Returns:
-            The LLM response content.
+    def autonomous_loops(self) -> list[tuple[Callable, float]]:
+        """Override to define (coroutine_fn, interval_seconds) pairs.
+        Default: no autonomous loops.
         """
-        messages = [
-            {"role": "system", "content": self.get_system_prompt()},
-            {"role": "user", "content": prompt},
-        ]
+        return []
 
-        result = await self.ctx.router.route_and_call(
-            task_type=task_type or ModelTaskType.STANDARD_REASONING,
-            messages=messages,
-            agent_id=self.agent_id,
-            daily_budget_usd=self.ctx.daily_budget_usd,
-            temperature=temperature,
-            max_tokens=max_tokens,
-        )
-
-        return str(result["content"])
-
-    async def remember(
-        self,
-        key: str,
-        value: dict[str, Any],
-        *,
-        namespace_suffix: str = "episodic",
-    ) -> None:
-        """Store a memory in OpenViking.
-
-        Args:
-            key: Memory key.
-            value: Data to store.
-            namespace_suffix: Namespace suffix (default: 'episodic').
-        """
-        ns = agent_namespace(self.agent_id, namespace_suffix)
-        await self.ctx.memory.store(ns, key, value, agent_id=self.agent_id)
-
-    async def recall(
-        self,
-        key: str,
-        *,
-        namespace_suffix: str = "episodic",
-    ) -> Optional[dict[str, Any]]:
-        """Recall a memory from OpenViking.
-
-        Args:
-            key: Memory key.
-            namespace_suffix: Namespace suffix.
-
-        Returns:
-            Stored value or None.
-        """
-        ns = agent_namespace(self.agent_id, namespace_suffix)
-        return await self.ctx.memory.recall(ns, key)
-
-    async def assign_task(
-        self,
-        target_agent: str,
-        title: str,
-        description: str = "",
-        *,
-        priority: int = 2,
-        task_type: str = "standard_reasoning",
-    ) -> str:
-        """Assign a task to another agent via the message bus.
-
-        Args:
-            target_agent: Target agent ID.
-            title: Task title.
-            description: Task description.
-            priority: Task priority (0=critical, 3=low).
-            task_type: Model routing hint.
-
-        Returns:
-            The generated task ID.
-        """
-        task_id = str(uuid4())
-        message = TaskAssignMessage(
-            task_id=task_id,
-            source_agent=self.agent_id,
-            target_agent=target_agent,
-            title=title,
-            description=description,
-            priority=priority,
-            task_type=task_type,
-            escalation_path=self.agent_id,
-        )
-
-        subject = SUBJECT_TASK_ASSIGN.format(agent_id=target_agent)
-        await self.ctx.bus.publish(subject, message)
-
-        self._logger.info(
-            "Task assigned",
-            task_id=task_id,
-            target_agent=target_agent,
-            title=title,
-        )
-        return task_id
-
-    async def escalate(
-        self,
-        reason: str,
-        severity: str = "medium",
-        context: Optional[dict[str, Any]] = None,
-    ) -> None:
-        """Escalate an issue to a higher-tier agent.
-
-        Args:
-            reason: Why the escalation is needed.
-            severity: Severity level.
-            context: Additional context data.
-        """
-        message = EscalationMessage(
-            source_agent=self.agent_id,
-            target_agent="oracle",  # Default escalation target
-            severity=severity,
-            reason=reason,
-            context=context or {},
-        )
-
-        await self.ctx.bus.publish("tasks.escalation.oracle", message)
-        self._logger.warning("Escalation sent", reason=reason, severity=severity)
-
-    # ── Internal loops ────────────────────────────────────────
-
-    async def _heartbeat_loop(self) -> None:
-        """Periodically publish heartbeat messages."""
+    async def _loop_wrapper(self, coro_fn: Callable, interval: float) -> None:
+        """Run a coroutine on a fixed interval with error recovery."""
+        await asyncio.sleep(1)  # Initial delay
         while self._running:
             try:
-                heartbeat = HeartbeatMessage(
-                    source_agent=self.agent_id,
-                    agent_status=self.status.value,
-                    uptime_seconds=self.uptime_seconds,
-                    tasks_completed=self._tasks_completed,
-                    error_count=self._error_count,
-                )
-                subject = SUBJECT_HEARTBEAT.format(agent_id=self.agent_id)
-                await self.ctx.bus.publish(subject, heartbeat)
+                await coro_fn()
+            except asyncio.CancelledError:
+                break
             except Exception as exc:
-                self._logger.error("Heartbeat failed", error=str(exc))
+                self._error_count += 1
+                self._logger.error(
+                    "Autonomous loop %s failed: %s",
+                    coro_fn.__name__,
+                    str(exc),
+                )
+            await asyncio.sleep(interval)
 
-            await asyncio.sleep(HEARTBEAT_INTERVAL_SECONDS)
+    # --- Core capabilities ---------------------------------------------------
 
-    async def _on_raw_task_message(self, msg: Any) -> None:
-        """Handle raw NATS task message — deserialize and dispatch."""
+    async def think(self, prompt: str, **kwargs) -> str:
+        """Call the LLM through the model router."""
+        router = self._get_router()
+        if router is None:
+            self._logger.warning("No router available — returning empty response")
+            return ""
         try:
-            task = TaskAssignMessage.model_validate_json(msg.data)
-            self._lifecycle.transition(AgentStatus.RUNNING, reason=f"Task: {task.title}")
+            from aibe.core.exceptions import BudgetExceededError
 
-            output_data = await self.on_task_receive(task)
-
-            # Publish result
-            result = TaskResultMessage(
-                source_agent=self.agent_id,
-                target_agent=task.source_agent,
-                task_id=task.task_id,
-                status="completed",
-                output_data=output_data,
-            )
-            await self.ctx.bus.publish(
-                f"tasks.result.{task.source_agent}",
-                result,
-            )
-
-            self._tasks_completed += 1
-            self._lifecycle.transition(AgentStatus.READY, reason="Task completed")
-
-        except Exception as exc:
-            self._error_count += 1
-            self._logger.error("Task execution failed", error=str(exc))
-
-            if self._lifecycle.can_transition(AgentStatus.ERROR):
-                self._lifecycle.transition(AgentStatus.ERROR, reason=str(exc))
-
-            # Try to recover
-            if self._lifecycle.can_transition(AgentStatus.READY):
-                self._lifecycle.transition(AgentStatus.READY, reason="Error recovery")
-
-        finally:
-            # Acknowledge the message
             try:
-                await msg.ack()
+                result = await router.route_and_call(
+                    agent_id=self.agent_id,
+                    system_prompt=self.get_system_prompt(),
+                    user_prompt=prompt,
+                    **kwargs,
+                )
+                return result
+            except BudgetExceededError:
+                await self.escalate("Daily budget exceeded", severity="high")
+                raise
+        except ImportError:
+            return ""
+
+    async def escalate(self, message: str, severity: str = "medium") -> None:
+        """Escalate an issue to the escalation target."""
+        self._logger.warning(
+            "ESCALATION [%s] from %s: %s",
+            severity,
+            self.agent_id,
+            message,
+        )
+        bus = self._get_bus()
+        if bus and self.escalation_target:
+            try:
+                await bus.publish(
+                    f"tasks.escalation.{self.escalation_target}",
+                    {
+                        "source": self.agent_id,
+                        "message": message,
+                        "severity": severity,
+                    },
+                )
             except Exception:
                 pass
 
+    async def on_task_receive(self, data: dict) -> dict:
+        """Handle an incoming task. Override for custom logic."""
+        self._logger.info("Received task: %s", data.get("title", "untitled"))
+        prompt = f"Task: {data.get('title', '')}\nDescription: {data.get('description', '')}"
+        result = await self.think(prompt)
+        self._tasks_completed += 1
+        return {"status": "completed", "output": result}
 
-__all__ = ["BaseAgent"]
+    # --- Memory access -------------------------------------------------------
+
+    async def memory_store(self, namespace: str, key: str, value: Any) -> None:
+        memory = self._get_memory()
+        if memory:
+            try:
+                await memory.store(namespace, key, value)
+            except Exception:
+                self._logger.debug("Memory store failed")
+
+    async def memory_recall(self, namespace: str, key: str) -> Any:
+        memory = self._get_memory()
+        if memory:
+            try:
+                return await memory.recall(namespace, key)
+            except Exception:
+                return None
+        return None
+
+    # --- Internal helpers ----------------------------------------------------
+
+    def _get_bus(self):
+        if self._context and hasattr(self._context, "bus"):
+            return self._context.bus
+        return None
+
+    def _get_router(self):
+        if self._context and hasattr(self._context, "router"):
+            return self._context.router
+        return None
+
+    def _get_memory(self):
+        if self._context and hasattr(self._context, "memory"):
+            return self._context.memory
+        return None
+
+    def register_handler(self, subject: str, handler: Callable) -> None:
+        """Register a message bus handler."""
+        self._handlers[subject] = handler

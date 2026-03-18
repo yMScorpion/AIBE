@@ -1,125 +1,216 @@
-"""Ledger — CFO Agent.
+# aibe/agents/finance/ledger.py
+"""Ledger — Chief Financial Agent (Tier 5).
 
-Tracks revenue, expenses, generates P&L reports, and enforces
-budget constraints across all agents and departments.
-
-Tier: 5 (Finance & Operations)
-Default task type: standard_reasoning
+Manages financial operations, budget tracking, expense analysis,
+and provides financial insights to the executive team.
 """
 
 from __future__ import annotations
 
+import time
+from collections.abc import Callable
 from typing import Any
 
 from aibe.agents.base.agent import BaseAgent
-from aibe.core.logging import get_logger
-from aibe.core.message_bus.models import TaskAssignMessage
-from aibe.core.types import ModelTaskType
-
-logger = get_logger(__name__)
 
 
-class Ledger(BaseAgent):
-    """CFO agent — financial tracking, P&L, and budget enforcement.
+class LedgerAgent(BaseAgent):
+    """Chief financial officer agent."""
 
-    Responsibilities:
-    - Revenue tracking (Stripe, invoices, MRR)
-    - Expense categorisation (LLM, infra, contractors, ads)
-    - P&L report generation
-    - Budget enforcement (approvals, alerts)
-    - Financial projections
-    """
+    agent_id = "ledger"
+    name = "Ledger"
+    tier = 5
+    escalation_target = "oracle"
+    daily_budget_usd = 3.0
+
+    def __init__(self, context: Any = None) -> None:
+        super().__init__(context)
+        self.register_handler(f"tasks.assign.{self.agent_id}", self._handle_task)
+        self.register_handler("finance.budget.>", self._handle_budget_event)
+        self._budget_alerts: list[dict] = []
 
     def get_system_prompt(self) -> str:
-        return """You are Ledger, the CFO of AIBE.
+        return """You are Ledger, the Chief Financial Agent of AIBE.
 
-ROLE: You track all financial data, generate reports, and enforce budgets.
+ROLE & RESPONSIBILITIES:
+- Track and analyze all system expenditures (LLM costs, infrastructure, services)
+- Manage budget allocations across agents and departments
+- Generate financial reports and forecasts
+- Identify cost optimization opportunities
+- Alert on budget overruns or anomalous spending patterns
 
-FINANCIAL CATEGORIES:
-- Revenue: MRR, ARR, one-time sales, partnership income
-- LLM Costs: Per-agent daily spend, model routing costs
-- Infrastructure: Cloud, APIs, domain, hosting
-- Advertising: Meta Ads, Google Ads campaigns
-- Contractors: External hiring via Upwork/Fiverr
-- Content: Image/video/audio generation costs
+FINANCIAL METRICS TO MONITOR:
+1. Daily/Weekly/Monthly LLM spend by agent
+2. Cost per task by tier and complexity
+3. Budget utilization rates
+4. ROI indicators (tasks completed / cost)
+5. Trend analysis and projections
 
-BUDGET RULES:
-- Daily LLM budget: $50 (configurable)
-- Daily ads cap: $100 (configurable)
-- Monthly contractor budget: $500 (configurable)
-- Contractor auto-approve: < $200
-- Contractor human-approve: $200-$500
+OUTPUT FORMAT for financial reports:
+{
+  "report_type": "daily|weekly|monthly|alert",
+  "period": {"start": "ISO date", "end": "ISO date"},
+  "total_spend_usd": 0.00,
+  "budget_usd": 0.00,
+  "utilization_pct": 0.0,
+  "by_tier": [{"tier": 0, "spend": 0.00, "budget": 0.00}],
+  "by_agent": [{"agent_id": "x", "spend": 0.00, "tasks": 0, "cpt": 0.00}],
+  "anomalies": [{"type": "x", "severity": "low|medium|high", "details": ""}],
+  "recommendations": ["action 1", "action 2"],
+  "forecast": {"next_day": 0.00, "next_week": 0.00}
+}
 
-OUTPUT FORMAT: Structured JSON with:
-- "financial_data": numbers and calculations
-- "analysis": insights and trends
-- "alerts": any budget warnings
-- "recommendations": cost optimization suggestions
-"""
+Be precise with numbers, proactive with alerts, and strategic with recommendations."""
 
-    async def on_task_receive(self, task: TaskAssignMessage) -> dict[str, Any]:
-        task_lower = task.title.lower()
+    def autonomous_loops(self) -> list[tuple[Callable, float]]:
+        return [
+            (self._budget_monitoring, 3600),
+            (self._daily_report_generation, 86400),
+        ]
 
-        if "p&l" in task_lower or "profit" in task_lower or "loss" in task_lower:
-            return await self._handle_pnl(task)
-        elif "budget" in task_lower:
-            return await self._handle_budget_review(task)
-        elif "expense" in task_lower or "cost" in task_lower:
-            return await self._handle_expense_analysis(task)
-        else:
-            return await self._handle_financial_task(task)
+    async def _handle_task(self, data: dict) -> None:
+        """Process financial analysis tasks."""
+        self._status = "running"
+        try:
+            result = await self.on_task_receive(data)
+            bus = self._get_bus()
+            if bus:
+                await bus.publish(
+                    f"tasks.result.{data.get('source', 'unknown')}",
+                    {"task_id": data.get("task_id"), "status": "completed", "output": result},
+                )
+            self._tasks_completed += 1
+        except Exception as exc:
+            self._error_count += 1
+            self._logger.error("Financial task failed: %s", str(exc))
+        finally:
+            self._status = "ready"
 
-    async def _handle_pnl(self, task: TaskAssignMessage) -> dict[str, Any]:
-        prompt = f"""P&L REPORT: {task.title}
+    async def _handle_budget_event(self, data: dict) -> None:
+        """Handle budget-related events."""
+        event_type = data.get("type")
+        if event_type == "threshold_exceeded":
+            self._budget_alerts.append({
+                "event": data,
+                "timestamp": time.time(),
+                "acknowledged": False,
+            })
+            await self.escalate(
+                f"Budget threshold exceeded: {data.get('agent_id')} at {data.get('utilization_pct')}%",
+                severity="medium",
+            )
 
-Data: {task.input_data}
-Context: {task.description}
+    async def _budget_monitoring(self) -> None:
+        """Monitor budget utilization across all agents every hour."""
+        context = self._context
+        if not context:
+            return
 
-Generate a comprehensive P&L report including:
-1. Revenue breakdown by source
-2. Cost breakdown by category (LLM, infra, ads, contractors)
-3. Gross margin
-4. Net margin
-5. Month-over-month trends
-6. Burn rate and runway
+        registry = getattr(context, "registry", None)
+        cost_tracker = getattr(context, "cost_tracker", None)
 
-Provide JSON with all calculations shown."""
+        if not registry:
+            return
 
-        response = await self.think(prompt, task_type=ModelTaskType.STANDARD_REASONING)
-        return {"pnl_report": response}
-
-    async def _handle_budget_review(self, task: TaskAssignMessage) -> dict[str, Any]:
-        prompt = f"""BUDGET REVIEW: {task.title}
-
-Data: {task.input_data}
-Context: {task.description}
-
-Review budget utilisation across all categories:
-1. LLM spend vs daily/monthly budget
-2. Ad spend vs daily cap
-3. Contractor spend vs monthly budget
-4. Infrastructure costs
-5. Any budget violations or warnings
-6. Optimisation opportunities
-
-Flag any agents over 80% of their daily budget."""
-
-        response = await self.think(prompt, task_type=ModelTaskType.STANDARD_REASONING)
-        return {"budget_review": response}
-
-    async def _handle_expense_analysis(self, task: TaskAssignMessage) -> dict[str, Any]:
-        response = await self.think(
-            f"Expense analysis: {task.title}\n{task.description}\nData: {task.input_data}",
-            task_type=ModelTaskType.STANDARD_REASONING,
+        agents = (
+            registry.get_all()
+            if hasattr(registry, "get_all")
+            else list(getattr(registry, "_agents", {}).values())
         )
-        return {"expense_analysis": response}
 
-    async def _handle_financial_task(self, task: TaskAssignMessage) -> dict[str, Any]:
-        response = await self.think(
-            f"Financial task: {task.title}\n{task.description}\nData: {task.input_data}",
-            task_type=ModelTaskType.STANDARD_REASONING,
+        budget_report = {
+            "timestamp": time.time(),
+            "total_budget": 0.0,
+            "total_spent": 0.0,
+            "agents": [],
+            "alerts": [],
+        }
+
+        for agent in agents:
+            agent_id = getattr(agent, "agent_id", "unknown")
+            budget = getattr(agent, "daily_budget_usd", 1.0)
+            spent = 0.0
+
+            if cost_tracker and hasattr(cost_tracker, "get_agent_spend"):
+                try:
+                    spent = cost_tracker.get_agent_spend(agent_id)
+                except Exception:
+                    pass
+
+            utilization = (spent / budget * 100) if budget > 0 else 0
+
+            agent_data = {
+                "agent_id": agent_id,
+                "tier": getattr(agent, "tier", -1),
+                "budget_usd": budget,
+                "spent_usd": spent,
+                "utilization_pct": round(utilization, 2),
+            }
+            budget_report["agents"].append(agent_data)
+            budget_report["total_budget"] += budget
+            budget_report["total_spent"] += spent
+
+            # Generate alerts for high utilization
+            if utilization >= 90:
+                budget_report["alerts"].append({
+                    "agent_id": agent_id,
+                    "severity": "critical" if utilization >= 100 else "high",
+                    "message": f"Budget utilization at {utilization:.1f}%",
+                })
+            elif utilization >= 75:
+                budget_report["alerts"].append({
+                    "agent_id": agent_id,
+                    "severity": "medium",
+                    "message": f"Budget utilization at {utilization:.1f}%",
+                })
+
+        await self.memory_store("ledger.budget", "current", budget_report)
+
+        # Escalate critical alerts
+        critical_alerts = [a for a in budget_report["alerts"] if a["severity"] == "critical"]
+        if critical_alerts:
+            await self.escalate(
+                f"{len(critical_alerts)} agent(s) exceeded budget",
+                severity="high",
+            )
+
+        self._logger.info(
+            "Budget monitoring: $%.2f / $%.2f (%.1f%% utilized)",
+            budget_report["total_spent"],
+            budget_report["total_budget"],
+            (budget_report["total_spent"] / budget_report["total_budget"] * 100)
+            if budget_report["total_budget"] > 0
+            else 0,
         )
-        return {"financial_analysis": response}
 
+    async def _daily_report_generation(self) -> None:
+        """Generate daily financial report at end of day."""
+        budget_data = await self.memory_recall("ledger.budget", "current")
 
-__all__ = ["Ledger"]
+        if not budget_data:
+            return
+
+        try:
+            report_prompt = f"""Generate a concise daily financial summary based on this data:
+            
+Total Spent: ${budget_data.get('total_spent', 0):.2f}
+Total Budget: ${budget_data.get('total_budget', 0):.2f}
+Active Alerts: {len(budget_data.get('alerts', []))}
+
+Top 5 spending agents:
+{budget_data.get('agents', [])[:5]}
+
+Provide:
+1. One-sentence summary
+2. Top concern (if any)
+3. One optimization recommendation"""
+
+            report = await self.think(report_prompt)
+            
+            await self.memory_store(
+                "ledger.reports",
+                f"daily_{int(time.time())}",
+                {"report": report, "data": budget_data, "generated_at": time.time()},
+            )
+        except Exception:
+            self._logger.debug("Daily report generation skipped — LLM unavailable")

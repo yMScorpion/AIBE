@@ -1,79 +1,50 @@
-"""Agent registry — discovers, registers, and tracks all agents."""
+# aibe/agents/registry.py
+"""Agent registry — tracks all active agents."""
 
 from __future__ import annotations
 
-from typing import Optional, TYPE_CHECKING
-
-from aibe.core.logging import get_logger
-from aibe.core.types import AgentStatus
+import logging
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from aibe.agents.base.agent import BaseAgent
 
-logger = get_logger(__name__)
+logger = logging.getLogger("aibe.registry")
 
 
 class AgentRegistry:
-    """Central registry for all agent instances.
-
-    Provides lookup by ID, tier, capability, and status tracking.
-    """
+    """Registry for tracking all active agent instances."""
 
     def __init__(self) -> None:
-        self._agents: dict[str, BaseAgent] = {}
+        self._agents: dict[str, "BaseAgent"] = {}
 
-    def register(self, agent: BaseAgent) -> None:
-        """Register an agent instance.
-
-        Args:
-            agent: The agent to register.
-        """
-        self._agents[agent.agent_id] = agent
-        logger.info(
-            "Agent registered",
-            agent_id=agent.agent_id,
-            agent_name=agent.agent_name,
-            tier=agent.ctx.tier,
-        )
+    def register(self, agent: "BaseAgent") -> None:
+        """Register an agent."""
+        agent_id = getattr(agent, "agent_id", "unknown")
+        self._agents[agent_id] = agent
+        logger.info("Agent registered: %s", agent_id)
 
     def unregister(self, agent_id: str) -> None:
-        """Remove an agent from the registry.
+        """Unregister an agent."""
+        if agent_id in self._agents:
+            del self._agents[agent_id]
+            logger.info("Agent unregistered: %s", agent_id)
 
-        Args:
-            agent_id: ID of the agent to remove.
-        """
-        self._agents.pop(agent_id, None)
-        logger.info("Agent unregistered", agent_id=agent_id)
-
-    def get(self, agent_id: str) -> Optional[BaseAgent]:
-        """Get an agent by ID.
-
-        Args:
-            agent_id: Agent identifier.
-
-        Returns:
-            The agent instance or None.
-        """
+    def get(self, agent_id: str) -> "BaseAgent | None":
+        """Get an agent by ID."""
         return self._agents.get(agent_id)
 
-    def get_by_tier(self, tier: int) -> list[BaseAgent]:
-        """Get all agents of a specific tier.
-
-        Args:
-            tier: Tier number (0-9).
-
-        Returns:
-            List of agents in that tier.
-        """
-        return [a for a in self._agents.values() if a.ctx.tier == tier]
-
-    def get_active(self) -> list[BaseAgent]:
-        """Get all agents in an active state."""
-        return [a for a in self._agents.values() if a.status in {AgentStatus.READY, AgentStatus.RUNNING}]
-
-    def get_all(self) -> list[BaseAgent]:
+    def get_all(self) -> list["BaseAgent"]:
         """Get all registered agents."""
         return list(self._agents.values())
+
+    def get_by_tier(self, tier: int) -> list["BaseAgent"]:
+        """Get all agents for a specific tier."""
+        return [a for a in self._agents.values() if getattr(a, "tier", -1) == tier]
+
+    def get_by_status(self, status: str) -> list["BaseAgent"]:
+        """Get all agents with a specific status."""
+        return [a for a in self._agents.values() if getattr(a, "status", "") == status]
 
     @property
     def count(self) -> int:
@@ -82,20 +53,16 @@ class AgentRegistry:
 
     @property
     def active_count(self) -> int:
-        """Number of active agents."""
-        return len(self.get_active())
+        """Number of active (running/ready) agents."""
+        return len([
+            a for a in self._agents.values()
+            if getattr(a, "status", "") in ("running", "ready")
+        ])
 
     def get_status_summary(self) -> dict[str, int]:
-        """Get a count of agents by status.
-
-        Returns:
-            Dict mapping status name to count.
-        """
+        """Get count of agents by status."""
         summary: dict[str, int] = {}
         for agent in self._agents.values():
-            status = agent.status.value
+            status = getattr(agent, "status", "unknown")
             summary[status] = summary.get(status, 0) + 1
         return summary
-
-
-__all__ = ["AgentRegistry"]

@@ -1,38 +1,35 @@
-"""Prism — Marketing Analytics Agent. Tier: 3 (Marketing)."""
+# aibe/agents/marketing/prism.py
+"""Prism — Marketing Analytics Agent (Tier 3)."""
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Callable
 
 from aibe.agents.base.agent import BaseAgent
-from aibe.core.message_bus.models import TaskAssignMessage
-from aibe.core.types import ModelTaskType
 
 
-class Prism(BaseAgent):
-    """Marketing analytics — attribution, ROI, dashboards, A/B testing."""
+class PrismAgent(BaseAgent):
+    agent_id = "prism"
+    name = "Prism"
+    tier = 3
+    escalation_target = "helix"
+    daily_budget_usd = 2.0
+
+    def __init__(self, context=None):
+        super().__init__(context)
+        self.register_handler(f"tasks.assign.{self.agent_id}", self._handle_task)
 
     def get_system_prompt(self) -> str:
-        return """You are Prism, the Marketing Analytics Analyst of AIBE.
+        return "You are Prism, a Marketing Analytics Agent. You aggregate and analyse marketing metrics."
 
-ROLE: You analyse marketing performance, attribution, ROI, and conversion funnels.
+    def autonomous_loops(self) -> list[tuple[Callable, float]]:
+        return [(self._analytics_digest, 1800)]
 
-RESPONSIBILITIES:
-- Multi-touch attribution modeling
-- Campaign ROI calculation
-- Conversion funnel analysis
-- A/B test result analysis (statistical significance)
-- Dashboard creation and reporting
-- Cohort analysis and LTV calculations
+    async def _handle_task(self, data: dict) -> None:
+        result = await self.on_task_receive(data)
+        bus = self._get_bus()
+        if bus:
+            await bus.publish(f"tasks.result.{data.get('task_id', 'unknown')}", result)
 
-OUTPUT: JSON with metrics, statistical_analysis, insights, and recommendations."""
-
-    async def on_task_receive(self, task: TaskAssignMessage) -> dict[str, Any]:
-        response = await self.think(
-            f"Analytics task: {task.title}\n{task.description}\nData: {task.input_data}",
-            task_type=ModelTaskType.STANDARD_REASONING,
-        )
-        return {"analytics": response}
-
-
-__all__ = ["Prism"]
+    async def _analytics_digest(self) -> None:
+        self._logger.info("Marketing analytics digest complete")

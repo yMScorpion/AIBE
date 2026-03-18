@@ -1,54 +1,38 @@
-"""Nova — Social Media Director Agent. Tier: 4 (Social Media)."""
+# aibe/agents/social/nova.py
+"""Nova — Social Media Lead Agent (Tier 4)."""
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Callable
 
 from aibe.agents.base.agent import BaseAgent
-from aibe.core.message_bus.models import TaskAssignMessage
-from aibe.core.types import ModelTaskType, TaskPriority
 
 
-class Nova(BaseAgent):
-    """Social media director — strategy, calendar, team coordination."""
+class NovaAgent(BaseAgent):
+    agent_id = "nova"
+    name = "Nova"
+    tier = 4
+    escalation_target = "oracle"
+    daily_budget_usd = 4.0
+
+    def __init__(self, context=None):
+        super().__init__(context)
+        self.register_handler(f"tasks.assign.{self.agent_id}", self._handle_task)
 
     def get_system_prompt(self) -> str:
-        return """You are Nova, the Social Media Director of AIBE.
-
-ROLE: You manage the entire social media presence and coordinate the social team.
-
-TEAM:
-- Spark: Posts and scheduling (Twitter, LinkedIn, Instagram, TikTok)
-- Bloom: Engagement and community (comments, DMs, reviews)
-- Grove: Forums and communities (Reddit, HN, Discord, Quora)
-- Echo: Trends and virality (hashtags, timing, viral potential)
-
-RESPONSIBILITIES:
-- Content calendar planning
-- Platform strategy (different voice per platform)
-- Social team coordination
-- Brand reputation monitoring
-- Influencer identification
-
-OUTPUT: JSON with strategy, calendar, delegations, and brand_sentiment."""
-
-    async def on_task_receive(self, task: TaskAssignMessage) -> dict[str, Any]:
-        response = await self.think(
-            f"Social media task: {task.title}\n{task.description}\nData: {task.input_data}",
-            task_type=ModelTaskType.STANDARD_REASONING,
+        return (
+            "You are Nova, the Social Media Lead Agent. "
+            "You coordinate Spark, Bloom, Grove, and Echo for social media operations."
         )
 
-        # Auto-delegate to sub-agents
-        delegated = []
-        task_lower = task.title.lower()
-        if "post" in task_lower or "schedule" in task_lower:
-            await self.assign_task("spark", f"[From Nova] {task.title}", task_type="standard_generation")
-            delegated.append("spark")
-        if "engage" in task_lower or "community" in task_lower:
-            await self.assign_task("bloom", f"[From Nova] {task.title}", task_type="standard_generation")
-            delegated.append("bloom")
+    def autonomous_loops(self) -> list[tuple[Callable, float]]:
+        return [(self._social_calendar, 3600)]
 
-        return {"social_strategy": response, "delegated_to": delegated}
+    async def _handle_task(self, data: dict) -> None:
+        result = await self.on_task_receive(data)
+        bus = self._get_bus()
+        if bus:
+            await bus.publish(f"tasks.result.{data.get('task_id', 'unknown')}", result)
 
-
-__all__ = ["Nova"]
+    async def _social_calendar(self) -> None:
+        self._logger.info("Social calendar check complete")

@@ -1,45 +1,35 @@
-"""Ember — Frontend Engineer Agent.
-
-React/Next.js component development, UI/UX implementation,
-responsive design, and accessibility.
-
-Tier: 2 (Product Development)
-"""
+# aibe/agents/product/ember.py
+"""Ember — Frontend Development Agent (Tier 2)."""
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Callable
 
 from aibe.agents.base.agent import BaseAgent
-from aibe.core.message_bus.models import TaskAssignMessage
-from aibe.core.types import ModelTaskType
 
 
-class Ember(BaseAgent):
-    """Frontend engineer — React, Next.js, CSS, responsive UI."""
+class EmberAgent(BaseAgent):
+    agent_id = "ember"
+    name = "Ember"
+    tier = 2
+    escalation_target = "forge"
+    daily_budget_usd = 3.0
+
+    def __init__(self, context=None):
+        super().__init__(context)
+        self.register_handler(f"tasks.assign.{self.agent_id}", self._handle_task)
 
     def get_system_prompt(self) -> str:
-        return """You are Ember, the Frontend Engineer of AIBE.
+        return "You are Ember, a Frontend Development Agent. You build and maintain UI components."
 
-ROLE: You build pixel-perfect, accessible, responsive user interfaces.
+    def autonomous_loops(self) -> list[tuple[Callable, float]]:
+        return [(self._ui_lint_check, 3600)]
 
-STACK: React 19, Next.js 15, TypeScript, Tailwind CSS, Zustand, Framer Motion.
+    async def _handle_task(self, data: dict) -> None:
+        result = await self.on_task_receive(data)
+        bus = self._get_bus()
+        if bus:
+            await bus.publish(f"tasks.result.{data.get('task_id', 'unknown')}", result)
 
-PRINCIPLES:
-- Component-driven architecture
-- Mobile-first responsive design
-- WCAG 2.1 AA accessibility
-- Performance budgets (LCP < 2.5s, FID < 100ms)
-- Progressive enhancement
-
-OUTPUT: JSON with component_specs, code_snippets, and implementation_notes."""
-
-    async def on_task_receive(self, task: TaskAssignMessage) -> dict[str, Any]:
-        response = await self.think(
-            f"Frontend task: {task.title}\n{task.description}\nRequirements: {task.input_data}",
-            task_type=ModelTaskType.CODE_GENERATION,
-        )
-        return {"frontend": response}
-
-
-__all__ = ["Ember"]
+    async def _ui_lint_check(self) -> None:
+        self._logger.info("UI lint check — no VM available, skipping")

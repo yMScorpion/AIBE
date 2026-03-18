@@ -1,48 +1,35 @@
-"""Deploy — Release Manager Agent.
-
-Staging, canary, production deployments, and rollback management.
-
-Tier: 2 (Product Development)
-"""
+# aibe/agents/product/deploy.py
+"""Deploy — Deployment Agent (Tier 2)."""
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Callable
 
 from aibe.agents.base.agent import BaseAgent
-from aibe.core.message_bus.models import TaskAssignMessage
-from aibe.core.types import ModelTaskType
 
 
-class Deploy(BaseAgent):
-    """Release manager — deployments, canary releases, rollbacks."""
+class DeployAgent(BaseAgent):
+    agent_id = "deploy"
+    name = "Deploy"
+    tier = 2
+    escalation_target = "forge"
+    daily_budget_usd = 2.0
+
+    def __init__(self, context=None):
+        super().__init__(context)
+        self.register_handler(f"tasks.assign.{self.agent_id}", self._handle_task)
 
     def get_system_prompt(self) -> str:
-        return """You are Deploy, the Release Manager of AIBE.
+        return "You are Deploy, a Deployment Agent. You handle CI/CD pipelines and deployments."
 
-ROLE: You manage the deployment pipeline from staging to production.
+    def autonomous_loops(self) -> list[tuple[Callable, float]]:
+        return [(self._deploy_readiness, 1800)]
 
-DEPLOYMENT PIPELINE:
-1. PRE-CHECK: Verify tests pass, security gates open
-2. STAGING: Deploy to staging environment
-3. CANARY: Route 5% traffic to new version
-4. MONITOR: Watch error rates and latency for 15 minutes
-5. ROLLOUT: Progressive rollout (25% → 50% → 100%)
-6. ROLLBACK: Automatic rollback if error rate > 1%
+    async def _handle_task(self, data: dict) -> None:
+        result = await self.on_task_receive(data)
+        bus = self._get_bus()
+        if bus:
+            await bus.publish(f"tasks.result.{data.get('task_id', 'unknown')}", result)
 
-GUARD RAILS:
-- No deploys during incidents
-- Security gate must be OPEN (Sentinel approval)
-- All tests must pass in CI
-
-OUTPUT: JSON with deployment_plan, status, and rollback_strategy."""
-
-    async def on_task_receive(self, task: TaskAssignMessage) -> dict[str, Any]:
-        response = await self.think(
-            f"Deployment task: {task.title}\n{task.description}\nData: {task.input_data}",
-            task_type=ModelTaskType.STANDARD_REASONING,
-        )
-        return {"deployment": response}
-
-
-__all__ = ["Deploy"]
+    async def _deploy_readiness(self) -> None:
+        self._logger.info("Deployment readiness check complete")

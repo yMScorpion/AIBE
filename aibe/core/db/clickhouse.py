@@ -1,84 +1,148 @@
-"""ClickHouse analytics client for cost/metrics/event storage."""
+# aibe/core/db/clickhouse.py
+"""Optional ClickHouse sink for analytics data."""
 
 from __future__ import annotations
 
+import asyncio
+import logging
+import os
+import time
+from collections import deque
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any
 
-import clickhouse_connect
-from clickhouse_connect.driver.client import Client as CHClient
-
-from aibe.core.config import get_settings
-from aibe.core.logging import get_logger
-
-logger = get_logger(__name__)
-
-_client: CHClient | None = None
+logger = logging.getLogger("aibe.clickhouse")
 
 
-def get_clickhouse() -> CHClient:
-    """Get or create the ClickHouse client."""
-    global _client  # noqa: PLW0603
-    if _client is None:
-        settings = get_settings()
-        _client = clickhouse_connect.get_client(
-            host=settings.clickhouse.host,
-            port=settings.clickhouse.port,
-            username=settings.clickhouse.user,
-            password=settings.clickhouse.password.get_secret_value(),
-            database=settings.clickhouse.database,
-        )
-        logger.info(
-            "ClickHouse client created",
-            host=settings.clickhouse.host,
-            database=settings.clickhouse.database,
-        )
-    return _client
+@dataclass
+class CostEvent:
+    agent_id: str
+    model: str
+    task_type: str
+    tokens_in: int
+    tokens_out: int
+    cost_usd: float
+    timestamp: datetime
 
 
-def insert_event(table: str, data: list[dict[str, Any]]) -> None:
-    """Insert rows into a ClickHouse table.
+class ClickHouseSink:
+    """Batch-insert cost events into ClickHouse.
 
-    Args:
-        table: Target table name.
-        data: List of row dictionaries.
+    Falls back gracefully if ClickHouse is unavailable.
     """
-    if not data:
-        return
-    client = get_clickhouse()
-    columns = list(data[0].keys())
-    rows = [[row[col] for col in columns] for row in data]
-    client.insert(table, rows, column_names=columns)
-    logger.debug("ClickHouse insert", table=table, row_count=len(data))
 
+    BATCH_SIZE = 100
+    FLUSH_INTERVAL = 10.0  # seconds
 
-def query(sql: str, parameters: dict[str, Any] | None = None) -> list[dict[str, Any]]:
-    """Execute a ClickHouse query and return rows as dicts.
+    def __init__(self) -> None:
+        self._url = os.getenv("CLICKHOUSE_URL", "http://localhost:8123")
+        self._database = os.getenv("CLICKHOUSE_DB", "aibe_analytics")
+        self._buffer: deque[CostEvent] = deque()
+        self._running = False
+        self._flush_task: asyncio.Task | None = None
+        self._available = False
+        self._client: Any = None
 
-    Args:
-        sql: SQL query string.
-        parameters: Optional query parameters.
+    async def start(self) -> None:
+        self._running = True
+        try:
+            import httpx
 
-    Returns:
-        List of row dictionaries.
-    """
-    client = get_clickhouse()
-    result = client.query(sql, parameters=parameters or {})
-    columns = result.column_names
-    return [dict(zip(columns, row, strict=True)) for row in result.result_rows]
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(f"{self._url}/ping", timeout=5)
+                self._available = resp.status_code == 200
+        except Exception:
+            self._available = False
+            logger.warning("ClickHouse unavailable — running in memory-only mode")
 
+        if self._available:
+            await self._ensure_table()
+            self._flush_task = asyncio.create_task(self._flush_loop())
+            logger.info("ClickHouse sink started")
 
-def close_clickhouse() -> None:
-    """Close the ClickHouse client."""
-    global _client  # noqa: PLW0603
-    if _client is not None:
-        _client.close()
-        _client = None
-        logger.info("ClickHouse client closed")
+    async def stop(self) -> None:
+        self._running = False
+        if self._flush_task and not self._flush_task.done():
+            self._flush_task.cancel()
+        if self._buffer and self._available:
+            await self._flush()
 
+    async def _ensure_table(self) -> None:
+        ddl = f"""
+        CREATE TABLE IF NOT EXISTS {self._database}.llm_costs (
+            agent_id String,
+            model String,
+            task_type String,
+            tokens_in UInt32,
+            tokens_out UInt32,
+            cost_usd Float64,
+            timestamp DateTime
+        ) ENGINE = MergeTree()
+        ORDER BY (agent_id, timestamp)
+        """
+        try:
+            import httpx
 
-__all__ = [
-    "close_clickhouse",
-    "get_clickhouse",
-    "insert_event",
-    "query",
-]
+            async with httpx.AsyncClient() as client:
+                await client.post(self._url, content=ddl, timeout=10)
+        except Exception:
+            logger.warning("Could not create ClickHouse table")
+
+    def push(self, event: CostEvent) -> None:
+        self._buffer.append(event)
+        if len(self._buffer) >= self.BATCH_SIZE and self._available:
+            asyncio.create_task(self._flush())
+
+    async def _flush(self) -> None:
+        if not self._buffer or not self._available:
+            return
+        batch = []
+        while self._buffer and len(batch) < self.BATCH_SIZE:
+            batch.append(self._buffer.popleft())
+
+        rows = "\n".join(
+            f"('{e.agent_id}','{e.model}','{e.task_type}',{e.tokens_in},{e.tokens_out},{e.cost_usd},'{e.timestamp.strftime('%Y-%m-%d %H:%M:%S')}')"
+            for e in batch
+        )
+        sql = f"INSERT INTO {self._database}.llm_costs VALUES {rows}"
+
+        try:
+            import httpx
+
+            async with httpx.AsyncClient() as client:
+                await client.post(self._url, content=sql, timeout=10)
+        except Exception:
+            logger.warning("ClickHouse flush failed, returning %d events to buffer", len(batch))
+            self._buffer.extendleft(reversed(batch))
+
+    async def _flush_loop(self) -> None:
+        while self._running:
+            await asyncio.sleep(self.FLUSH_INTERVAL)
+            if self._buffer:
+                await self._flush()
+
+    async def query_daily_history(self, days: int = 7) -> list[dict]:
+        if not self._available:
+            return []
+        sql = f"""
+        SELECT toDate(timestamp) AS day, sum(cost_usd) AS total
+        FROM {self._database}.llm_costs
+        WHERE timestamp >= today() - {days}
+        GROUP BY day ORDER BY day
+        """
+        try:
+            import httpx
+
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(
+                    self._url,
+                    content=sql,
+                    params={"default_format": "JSONEachRow"},
+                    timeout=10,
+                )
+                import json
+
+                return [json.loads(line) for line in resp.text.strip().split("\n") if line]
+        except Exception:
+            return []

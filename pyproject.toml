@@ -76,32 +76,32 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["aibe"]
 
+# pyproject.toml (seção de testes)
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-addopts = "-ra -q --strict-markers"
+addopts = "-v --tb=short --cov=aibe --cov-report=term-missing --cov-fail-under=80"
 markers = [
-    "unit: Unit tests",
-    "integration: Integration tests requiring external services",
-    "e2e: End-to-end tests",
-    "slow: Slow tests",
+    "integration: integration tests requiring external services",
+    "e2e: end-to-end tests", 
+    "slow: slow-running tests",
 ]
-
-[tool.black]
-line-length = 88
-target-version = ["py312"]
 
 [tool.coverage.run]
 source = ["aibe"]
-omit = ["tests/*", "*/migrations/*"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/migrations/*",
+]
 
 [tool.coverage.report]
-fail_under = 75
-show_missing = true
 exclude_lines = [
     "pragma: no cover",
-    "if TYPE_CHECKING:",
-    "if __name__ == .__main__.",
-    "@abstractmethod",
+    "def __repr__",
     "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
 ]
+fail_under = 80

@@ -1,161 +1,162 @@
-"""Budget enforcer using Redis atomic counters.
-
-Tracks per-agent daily spend and enforces budget thresholds:
-- At 80%: downgrade model tier (use fallbacks)
-- At 100%: suspend agent
-"""
+# aibe/core/router/budget.py
+"""Budget enforcement for agent LLM calls."""
 
 from __future__ import annotations
 
+import asyncio
+import time
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from typing import Any
 
-from aibe.core.config import get_settings
-from aibe.core.db.redis import get_redis
-from aibe.core.exceptions import RouterBudgetExceededError
-from aibe.core.logging import get_logger
 
-logger = get_logger(__name__)
+@dataclass
+class BudgetRecord:
+    """Track budget usage for an agent."""
+
+    agent_id: str
+    daily_budget_usd: float
+    spent_usd: float = 0.0
+    reserved_usd: float = 0.0
+    last_reset: float = field(default_factory=time.time)
+    call_count: int = 0
 
 
 class BudgetEnforcer:
-    """Per-agent daily LLM budget enforcement via Redis."""
+    """Enforce per-agent daily budget limits with reservation system.
+    
+    Flow:
+    1. Before LLM call: check_and_reserve() - reserves estimated cost
+    2. After LLM call: record_actual() - adjusts to actual cost
+    3. If call fails: release_reservation() - releases reserved amount
+    
+    Budget resets daily at midnight UTC.
+    """
 
-    def _budget_key(self, agent_id: str) -> str:
-        """Redis key for today's spend."""
-        today = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
-        return f"budget:{agent_id}:{today}"
+    def __init__(self, redis_client: Any = None) -> None:
+        self._redis = redis_client
+        self._budgets: dict[str, BudgetRecord] = {}
+        self._lock = asyncio.Lock()
 
-    async def record_spend(self, agent_id: str, cost_usd: float) -> float:
-        """Record a spend event and return new total.
+    def _get_or_create_record(self, agent_id: str, daily_budget: float) -> BudgetRecord:
+        """Get existing record or create new one."""
+        if agent_id not in self._budgets:
+            self._budgets[agent_id] = BudgetRecord(
+                agent_id=agent_id,
+                daily_budget_usd=daily_budget,
+            )
+        return self._budgets[agent_id]
 
-        Args:
-            agent_id: The agent that incurred the cost.
-            cost_usd: Cost in USD.
+    def _check_and_reset_daily(self, record: BudgetRecord) -> None:
+        """Reset budget if it's a new day."""
+        now = datetime.now(timezone.utc)
+        last_reset = datetime.fromtimestamp(record.last_reset, tz=timezone.utc)
+        
+        if now.date() > last_reset.date():
+            record.spent_usd = 0.0
+            record.reserved_usd = 0.0
+            record.call_count = 0
+            record.last_reset = now.timestamp()
 
-        Returns:
-            New total spend for today.
-        """
-        redis = await get_redis()
-        key = self._budget_key(agent_id)
-
-        # Atomic increment (multiply by 1000 for cent precision, Redis INCRBYFLOAT)
-        new_total_str = await redis.incrbyfloat(key, cost_usd)
-        new_total = float(new_total_str)
-
-        # Ensure key expires at end of day (24h TTL)
-        ttl = await redis.ttl(key)
-        if ttl == -1:  # No expiry set yet
-            await redis.expire(key, 86400)
-
-        logger.debug(
-            "Budget spend recorded",
-            agent_id=agent_id,
-            cost_usd=cost_usd,
-            total_today=new_total,
-        )
-        return new_total
-
-    async def get_spend(self, agent_id: str) -> float:
-        """Get current daily spend for an agent.
-
-        Args:
-            agent_id: Agent identifier.
-
-        Returns:
-            Total spend in USD for today.
-        """
-        redis = await get_redis()
-        key = self._budget_key(agent_id)
-        value = await redis.get(key)
-        return float(value) if value else 0.0
-
-    async def check_budget(
+    async def check_and_reserve(
         self,
         agent_id: str,
-        daily_limit_usd: float,
-    ) -> tuple[bool, bool]:
-        """Check if agent is within budget.
-
+        estimated_cost: float,
+        daily_budget: float = 1.0,
+    ) -> bool:
+        """Check if agent has budget and reserve the estimated amount.
+        
         Args:
-            agent_id: Agent identifier.
-            daily_limit_usd: Agent's daily budget limit.
-
+            agent_id: Agent requesting the budget
+            estimated_cost: Estimated cost of the operation
+            daily_budget: Agent's daily budget limit
+            
         Returns:
-            Tuple of (should_downgrade, should_suspend).
-            - should_downgrade: True if spend >= 80% of limit.
-            - should_suspend: True if spend >= 100% of limit.
+            True if budget available and reserved, False otherwise
         """
-        current = await self.get_spend(agent_id)
-        settings = get_settings()
+        async with self._lock:
+            record = self._get_or_create_record(agent_id, daily_budget)
+            self._check_and_reset_daily(record)
 
-        warning_threshold = daily_limit_usd * 0.80
-        suspend_threshold = daily_limit_usd * 1.00
+            # Calculate available budget
+            committed = record.spent_usd + record.reserved_usd
+            available = record.daily_budget_usd - committed
 
-        should_downgrade = current >= warning_threshold
-        should_suspend = current >= suspend_threshold
+            if estimated_cost > available:
+                return False
 
-        if should_suspend:
-            logger.warning(
-                "Agent budget SUSPENDED",
-                agent_id=agent_id,
-                current=current,
-                limit=daily_limit_usd,
-            )
-        elif should_downgrade:
-            logger.info(
-                "Agent budget warning — downgrading models",
-                agent_id=agent_id,
-                current=current,
-                limit=daily_limit_usd,
-            )
+            # Reserve the amount
+            record.reserved_usd += estimated_cost
+            return True
 
-        return should_downgrade, should_suspend
-
-    async def enforce(self, agent_id: str, daily_limit_usd: float) -> None:
-        """Enforce budget — raise if suspended.
-
+    async def release_reservation(self, agent_id: str, amount: float) -> None:
+        """Release a reservation (e.g., if call failed before consuming tokens).
+        
         Args:
-            agent_id: Agent identifier.
-            daily_limit_usd: Daily budget cap.
-
-        Raises:
-            RouterBudgetExceededError: If agent is at 100% budget.
+            agent_id: Agent to release reservation for
+            amount: Amount to release
         """
-        _, should_suspend = await self.check_budget(agent_id, daily_limit_usd)
-        if should_suspend:
-            current = await self.get_spend(agent_id)
-            raise RouterBudgetExceededError(
-                f"Agent {agent_id} daily budget exceeded: ${current:.2f} / ${daily_limit_usd:.2f}",
-                agent_id=agent_id,
-                budget_limit=daily_limit_usd,
-                current_spend=current,
-            )
+        async with self._lock:
+            if agent_id in self._budgets:
+                self._budgets[agent_id].reserved_usd = max(
+                    0, self._budgets[agent_id].reserved_usd - amount
+                )
 
-    async def get_all_agent_budgets(self) -> dict[str, float]:
-        """Get today's spend for all agents.
-
-        Returns:
-            Dict mapping agent_id to current spend.
+    async def record_actual(
+        self,
+        agent_id: str,
+        actual_cost: float,
+        estimated_cost: float,
+    ) -> None:
+        """Record the actual cost and adjust reservation.
+        
+        Args:
+            agent_id: Agent that made the call
+            actual_cost: Actual cost of the operation
+            estimated_cost: Originally estimated cost (to release from reservation)
         """
-        redis = await get_redis()
-        today = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
-        pattern = f"budget:*:{today}"
+        async with self._lock:
+            if agent_id not in self._budgets:
+                return
 
-        result: dict[str, float] = {}
-        cursor: int | str = 0
-        while True:
-            cursor, keys = await redis.scan(cursor=int(cursor), match=pattern, count=100)
-            for key in keys:
-                # key format: budget:{agent_id}:{date}
-                parts = str(key).split(":")
-                if len(parts) >= 3:
-                    agent_id = parts[1]
-                    value = await redis.get(key)
-                    result[agent_id] = float(value) if value else 0.0
-            if cursor == 0:
-                break
+            record = self._budgets[agent_id]
+            
+            # Release the reservation
+            record.reserved_usd = max(0, record.reserved_usd - estimated_cost)
+            
+            # Record actual spend
+            record.spent_usd += actual_cost
+            record.call_count += 1
 
-        return result
+    def get_budget_status(self, agent_id: str) -> dict:
+        """Get current budget status for an agent."""
+        if agent_id not in self._budgets:
+            return {
+                "agent_id": agent_id,
+                "budget_usd": 0,
+                "spent_usd": 0,
+                "reserved_usd": 0,
+                "available_usd": 0,
+                "utilization_pct": 0,
+                "call_count": 0,
+            }
 
+        record = self._budgets[agent_id]
+        self._check_and_reset_daily(record)
+        
+        available = record.daily_budget_usd - record.spent_usd - record.reserved_usd
+        utilization = (record.spent_usd / record.daily_budget_usd * 100) if record.daily_budget_usd > 0 else 0
 
-__all__ = ["BudgetEnforcer"]
+        return {
+            "agent_id": agent_id,
+            "budget_usd": record.daily_budget_usd,
+            "spent_usd": round(record.spent_usd, 4),
+            "reserved_usd": round(record.reserved_usd, 4),
+            "available_usd": round(available, 4),
+            "utilization_pct": round(utilization, 2),
+            "call_count": record.call_count,
+        }
+
+    def get_all_budgets(self) -> list[dict]:
+        """Get budget status for all tracked agents."""
+        return [self.get_budget_status(aid) for aid in self._budgets]

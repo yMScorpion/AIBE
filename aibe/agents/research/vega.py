@@ -1,38 +1,30 @@
-"""Vega — Strategic Analyst Agent.
-
-Deep SWOT analysis, market positioning, and strategy recommendations.
-
-Tier: 1 (Research)
-"""
+# aibe/agents/research/vega.py
+"""Vega — Data Analytics Agent (Tier 1)."""
 
 from __future__ import annotations
 
-from typing import Any
-
 from aibe.agents.base.agent import BaseAgent
-from aibe.core.message_bus.models import TaskAssignMessage
-from aibe.core.types import ModelTaskType
 
 
-class Vega(BaseAgent):
-    """Strategic analyst — SWOT, competitive positioning, trend forecasting."""
+class VegaAgent(BaseAgent):
+    agent_id = "vega"
+    name = "Vega"
+    tier = 1
+    escalation_target = "oracle"
+    daily_budget_usd = 3.0
+
+    def __init__(self, context=None):
+        super().__init__(context)
+        self.register_handler(f"tasks.assign.{self.agent_id}", self._handle_task)
 
     def get_system_prompt(self) -> str:
-        return """You are Vega, the Strategic Analyst of AIBE.
-
-ROLE: You perform SWOT analyses, competitive positioning, market trend
-forecasting, and strategic recommendations.
-
-FRAMEWORKS: SWOT, Porter's Five Forces, Blue Ocean Strategy, BCG Matrix.
-
-OUTPUT: JSON with analysis, insights, confidence_scores, and recommendations."""
-
-    async def on_task_receive(self, task: TaskAssignMessage) -> dict[str, Any]:
-        response = await self.think(
-            f"Strategic analysis: {task.title}\n{task.description}\nData: {task.input_data}",
-            task_type=ModelTaskType.DEEP_RESEARCH,
+        return (
+            "You are Vega, a Data Analytics Agent. "
+            "You analyse datasets, generate reports, and provide insights to support decision-making."
         )
-        return {"analysis": response}
 
-
-__all__ = ["Vega"]
+    async def _handle_task(self, data: dict) -> None:
+        result = await self.on_task_receive(data)
+        bus = self._get_bus()
+        if bus:
+            await bus.publish(f"tasks.result.{data.get('task_id', 'unknown')}", result)

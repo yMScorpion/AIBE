@@ -1,61 +1,38 @@
-"""Helix — CMO Agent.
-
-Marketing strategy, campaign planning, brand management,
-and coordination of marketing sub-agents.
-
-Tier: 3 (Growth & Marketing)
-"""
+# aibe/agents/marketing/helix.py
+"""Helix — Marketing Lead Agent (Tier 3)."""
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Callable
 
 from aibe.agents.base.agent import BaseAgent
-from aibe.core.logging import get_logger
-from aibe.core.message_bus.models import TaskAssignMessage
-from aibe.core.types import ModelTaskType, TaskPriority
-
-logger = get_logger(__name__)
 
 
-class Helix(BaseAgent):
-    """CMO agent — marketing strategy and team coordination."""
+class HelixAgent(BaseAgent):
+    agent_id = "helix"
+    name = "Helix"
+    tier = 3
+    escalation_target = "oracle"
+    daily_budget_usd = 5.0
+
+    def __init__(self, context=None):
+        super().__init__(context)
+        self.register_handler(f"tasks.assign.{self.agent_id}", self._handle_task)
 
     def get_system_prompt(self) -> str:
-        return """You are Helix, the CMO of AIBE.
-
-ROLE: You own the marketing strategy, brand, and growth.
-
-MARKETING TEAM:
-- Quill: Content writer (blog, copy, landing pages)
-- Lumen: Visual/video creator (images, videos, thumbnails)
-- Volt: Paid ads manager (Meta/Google Ads)
-- Prism: Analytics analyst (attribution, ROI, dashboards)
-
-You delegate content, creative, and ads work to your team.
-
-OUTPUT: Structured JSON with marketing strategies, campaign plans, and delegations."""
-
-    async def on_task_receive(self, task: TaskAssignMessage) -> dict[str, Any]:
-        response = await self.think(
-            f"Marketing task: {task.title}\n{task.description}\nData: {task.input_data}",
-            task_type=ModelTaskType.STANDARD_REASONING,
+        return (
+            "You are Helix, the Marketing Lead Agent. "
+            "You coordinate Quill, Lumen, Volt, and Prism to execute marketing strategies."
         )
 
-        # Delegate to sub-agents based on task content
-        delegated = []
-        task_lower = task.title.lower()
-        if "content" in task_lower or "blog" in task_lower:
-            await self.assign_task("quill", f"[From Helix] {task.title}", task_type="standard_generation")
-            delegated.append("quill")
-        if "visual" in task_lower or "image" in task_lower or "video" in task_lower:
-            await self.assign_task("lumen", f"[From Helix] {task.title}", task_type="standard_generation")
-            delegated.append("lumen")
-        if "ad" in task_lower or "campaign" in task_lower:
-            await self.assign_task("volt", f"[From Helix] {task.title}", task_type="standard_reasoning")
-            delegated.append("volt")
+    def autonomous_loops(self) -> list[tuple[Callable, float]]:
+        return [(self._campaign_review, 3600)]
 
-        return {"marketing": response, "delegated_to": delegated}
+    async def _handle_task(self, data: dict) -> None:
+        result = await self.on_task_receive(data)
+        bus = self._get_bus()
+        if bus:
+            await bus.publish(f"tasks.result.{data.get('task_id', 'unknown')}", result)
 
-
-__all__ = ["Helix"]
+    async def _campaign_review(self) -> None:
+        self._logger.info("Campaign review cycle complete")

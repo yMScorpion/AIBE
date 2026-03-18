@@ -1,171 +1,87 @@
-"""Minerva — Chief Strategist Agent.
-
-Minerva owns the Business Model Canvas, defines OKRs, manages
-strategy iterations, and proposes pivots when KPIs indicate problems.
-
-Tier: 0 (executive)
-Default task type: complex_reasoning
-"""
+# aibe/agents/executive/minerva.py
+"""Minerva — Chief Strategy Agent (Tier 0)."""
 
 from __future__ import annotations
 
-from typing import Any
+import time
+from collections.abc import Callable
 
 from aibe.agents.base.agent import BaseAgent
-from aibe.core.logging import get_logger
-from aibe.core.memory.namespaces import (
-    NS_BUSINESS_MODEL,
-    NS_BUSINESS_OKRS,
-    NS_BUSINESS_STRATEGY,
-)
-from aibe.core.message_bus.models import TaskAssignMessage
-from aibe.core.types import ModelTaskType
-
-logger = get_logger(__name__)
 
 
-class Minerva(BaseAgent):
-    """Chief strategist agent — Business Model Canvas and OKR management.
+class MinervaAgent(BaseAgent):
+    agent_id = "minerva"
+    name = "Minerva"
+    tier = 0
+    escalation_target = "oracle"
+    daily_budget_usd = 8.0
 
-    Responsibilities:
-    - Business Model Canvas creation and updates
-    - OKR definition and tracking
-    - Pivot recommendations when strategy isn't working
-    - Strategy alignment across departments
-    """
+    def __init__(self, context=None):
+        super().__init__(context)
+        self.register_handler(f"tasks.assign.{self.agent_id}", self._handle_task)
 
     def get_system_prompt(self) -> str:
-        return """You are Minerva, Chief Strategist of AIBE.
-
-ROLE: You are the strategic brain. You manage the Business Model Canvas,
-define OKRs (Objectives and Key Results), and recommend pivots.
-
-CORE FRAMEWORKS:
-1. Business Model Canvas: 9 blocks (Value Props, Customer Segments,
-   Channels, Customer Relationships, Revenue Streams, Key Resources,
-   Key Activities, Key Partnerships, Cost Structure)
-2. OKRs: Quarterly objectives with measurable key results
-3. Strategy Iterations: Data-driven pivots when metrics indicate failure
-
-PRINCIPLES:
-- Every recommendation must be backed by data from agent reports
-- Pivots require >2 weeks of negative trend data
-- OKRs must be SMART (Specific, Measurable, Achievable, Relevant, Time-bound)
-- Always consider resource constraints (budget, agent bandwidth)
-
-OUTPUT FORMAT: Always respond with structured JSON containing:
-- "canvas_updates": any BMC block changes
-- "okr_status": current OKR progress
-- "recommendations": strategic recommendations
-- "pivot_signal": null or {"reason", "proposed_pivot", "evidence"}
-"""
-
-    async def on_task_receive(self, task: TaskAssignMessage) -> dict[str, Any]:
-        """Handle strategic tasks."""
-        task_lower = task.title.lower()
-
-        if "canvas" in task_lower or "business model" in task_lower:
-            return await self._handle_canvas(task)
-        elif "okr" in task_lower or "objective" in task_lower:
-            return await self._handle_okrs(task)
-        elif "pivot" in task_lower or "strategy change" in task_lower:
-            return await self._handle_pivot_analysis(task)
-        else:
-            return await self._handle_strategy_task(task)
-
-    async def _handle_canvas(self, task: TaskAssignMessage) -> dict[str, Any]:
-        """Create or update the Business Model Canvas."""
-        current_canvas = await self.ctx.memory.recall(NS_BUSINESS_MODEL, "canvas")
-
-        prompt = f"""BUSINESS MODEL CANVAS TASK: {task.title}
-
-Current Canvas: {current_canvas or 'No existing canvas — create initial version'}
-Context: {task.description}
-Input data: {task.input_data}
-
-Create/update the Business Model Canvas with all 9 blocks:
-1. Value Propositions
-2. Customer Segments
-3. Channels
-4. Customer Relationships
-5. Revenue Streams
-6. Key Resources
-7. Key Activities
-8. Key Partnerships
-9. Cost Structure
-
-Provide structured JSON for each block with specific, actionable content."""
-
-        response = await self.think(prompt, task_type=ModelTaskType.COMPLEX_REASONING)
-
-        await self.ctx.memory.store(
-            NS_BUSINESS_MODEL,
-            "canvas",
-            {"content": response, "task_id": task.task_id},
-            agent_id=self.agent_id,
+        return (
+            "You are Minerva, the Chief Strategy Agent of AIBE. "
+            "You define OKRs, track strategic objectives, and ensure all departments "
+            "are aligned with the organisation's goals. Be analytical and structured."
         )
 
-        return {"canvas": response}
+    def autonomous_loops(self) -> list[tuple[Callable, float]]:
+        return [
+            (self._okr_tracking_loop, 1800),
+        ]
 
-    async def _handle_okrs(self, task: TaskAssignMessage) -> dict[str, Any]:
-        """Define or review OKRs."""
-        current_okrs = await self.ctx.memory.recall(NS_BUSINESS_OKRS, "current")
-        strategy = await self.ctx.memory.recall(NS_BUSINESS_STRATEGY, "latest_discovery")
+    async def _handle_task(self, data: dict) -> None:
+        result = await self.on_task_receive(data)
+        bus = self._get_bus()
+        if bus:
+            await bus.publish(f"tasks.result.{data.get('task_id', 'unknown')}", result)
 
-        prompt = f"""OKR MANAGEMENT: {task.title}
+    async def _okr_tracking_loop(self) -> None:
+        """Track OKR progress every 30 minutes."""
+        okrs = await self.memory_recall("minerva.okrs", "current")
+        if not okrs:
+            # Initialize default OKRs
+            default_okrs = {
+                "objectives": [
+                    {
+                        "title": "System Stability",
+                        "key_results": [
+                            {"kr": "Agent uptime > 99%", "score": 0.0},
+                            {"kr": "Error rate < 1%", "score": 0.0},
+                        ],
+                    },
+                    {
+                        "title": "Cost Efficiency",
+                        "key_results": [
+                            {"kr": "Daily spend < $50", "score": 0.0},
+                            {"kr": "Budget utilisation < 80%", "score": 0.0},
+                        ],
+                    },
+                ],
+                "updated_at": time.time(),
+            }
+            await self.memory_store("minerva.okrs", "current", default_okrs)
+            return
 
-Current OKRs: {current_okrs or 'No existing OKRs'}
-Business Strategy: {strategy or 'No strategy defined yet'}
-Context: {task.description}
+        # Update scores based on current system state
+        kpis = await self.memory_recall("oracle.kpis", "latest")
+        if kpis:
+            for obj in okrs.get("objectives", []):
+                for kr in obj.get("key_results", []):
+                    if "uptime" in kr["kr"].lower():
+                        error_agents = kpis.get("agents_in_error", 0)
+                        total = kpis.get("total_agents", 1)
+                        kr["score"] = round(1.0 - (error_agents / max(total, 1)), 2)
+                    elif "error rate" in kr["kr"].lower():
+                        total_errors = kpis.get("total_errors", 0)
+                        total_tasks = kpis.get("total_tasks_completed", 1)
+                        rate = total_errors / max(total_tasks, 1)
+                        kr["score"] = round(max(0, 1.0 - rate * 100), 2)
+                    elif "daily spend" in kr["kr"].lower():
+                        spend = kpis.get("total_spend_usd", 0)
+                        kr["score"] = round(min(1.0, max(0, 1.0 - spend / 50)), 2)
 
-Define or review OKRs following this structure:
-- Objective: Clear, inspiring goal statement
-- Key Results: 3-5 measurable outcomes (with target numbers)
-- Initiatives: Specific projects/tasks to achieve KRs
-- Owner: Which agent/tier is responsible
-
-Each KR should have: current_value, target_value, unit, deadline."""
-
-        response = await self.think(prompt, task_type=ModelTaskType.COMPLEX_REASONING)
-
-        await self.ctx.memory.store(
-            NS_BUSINESS_OKRS,
-            "current",
-            {"content": response, "task_id": task.task_id},
-            agent_id=self.agent_id,
-        )
-
-        return {"okrs": response}
-
-    async def _handle_pivot_analysis(self, task: TaskAssignMessage) -> dict[str, Any]:
-        """Analyse whether a strategy pivot is needed."""
-        prompt = f"""PIVOT ANALYSIS: {task.title}
-
-Context: {task.description}
-Data: {task.input_data}
-
-Evaluate whether a strategic pivot is warranted:
-1. What are the negative signals? (KPI trends, market changes)
-2. How long have these signals persisted?
-3. What are the proposed pivot options?
-4. Risk/reward analysis for each option
-5. Recommendation: HOLD, MINOR_ADJUSTMENT, or MAJOR_PIVOT
-
-A pivot requires >2 weeks of negative trend data."""
-
-        response = await self.think(prompt, task_type=ModelTaskType.COMPLEX_REASONING)
-
-        return {"pivot_analysis": response}
-
-    async def _handle_strategy_task(self, task: TaskAssignMessage) -> dict[str, Any]:
-        """Handle general strategic tasks."""
-        response = await self.think(
-            f"Strategic task: {task.title}\n\n{task.description}\n\n"
-            f"Data: {task.input_data}\n\n"
-            f"Provide strategic analysis and recommendations.",
-            task_type=ModelTaskType.STANDARD_REASONING,
-        )
-        return {"strategy": response}
-
-
-__all__ = ["Minerva"]
+            okrs["updated_at"] = time.time()
+            await self.memory_store("minerva.okrs", "current", okrs)

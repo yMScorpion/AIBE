@@ -1,38 +1,35 @@
-"""Quill — Content Writer Agent. Tier: 3 (Marketing)."""
+# aibe/agents/marketing/quill.py
+"""Quill — Content Writing Agent (Tier 3)."""
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Callable
 
 from aibe.agents.base.agent import BaseAgent
-from aibe.core.message_bus.models import TaskAssignMessage
-from aibe.core.types import ModelTaskType
 
 
-class Quill(BaseAgent):
-    """Content writer — blog posts, landing pages, copy, SEO content."""
+class QuillAgent(BaseAgent):
+    agent_id = "quill"
+    name = "Quill"
+    tier = 3
+    escalation_target = "helix"
+    daily_budget_usd = 3.0
+
+    def __init__(self, context=None):
+        super().__init__(context)
+        self.register_handler(f"tasks.assign.{self.agent_id}", self._handle_task)
 
     def get_system_prompt(self) -> str:
-        return """You are Quill, the Content Writer of AIBE.
+        return "You are Quill, a Content Writing Agent. You create compelling marketing content."
 
-ROLE: You write compelling, SEO-optimised content — blog posts, landing pages,
-email sequences, ad copy, product descriptions, and documentation.
+    def autonomous_loops(self) -> list[tuple[Callable, float]]:
+        return [(self._content_queue, 1800)]
 
-PRINCIPLES:
-- Audience-first writing
-- SEO best practices (keywords, meta, structure)
-- Brand voice consistency
-- A/B testable variations
-- Clear CTAs in every piece
+    async def _handle_task(self, data: dict) -> None:
+        result = await self.on_task_receive(data)
+        bus = self._get_bus()
+        if bus:
+            await bus.publish(f"tasks.result.{data.get('task_id', 'unknown')}", result)
 
-OUTPUT: JSON with content, metadata (title, meta_description, keywords), and variations."""
-
-    async def on_task_receive(self, task: TaskAssignMessage) -> dict[str, Any]:
-        response = await self.think(
-            f"Content task: {task.title}\n{task.description}\nBrief: {task.input_data}",
-            task_type=ModelTaskType.STANDARD_GENERATION,
-        )
-        return {"content": response}
-
-
-__all__ = ["Quill"]
+    async def _content_queue(self) -> None:
+        self._logger.info("Content queue check complete")

@@ -1,92 +1,123 @@
-"""AIBE FastAPI application factory.
+# aibe/ui/backend/app.py
+"""FastAPI application with full lifespan management."""
 
-Creates the FastAPI app with middleware, lifespan events,
-and all route groups.
-"""
 from __future__ import annotations
 
+import asyncio
+import logging
 from contextlib import asynccontextmanager
-from pathlib import Path
-from typing import AsyncIterator
+from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from aibe.core.config import get_settings
-from aibe.core.logging import get_logger, setup_logging
+from aibe.ui.backend.dependencies import (
+    set_meeting_store,
+    set_orchestrator,
+    set_task_tracker,
+)
 
-logger = get_logger(__name__)
+logger = logging.getLogger("aibe.app")
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Application lifespan — startup and shutdown hooks."""
-    settings = get_settings()
-    setup_logging(
-        log_level=settings.log_level,
-        json_format=settings.is_production,
-    )
-    logger.info(
-        "AIBE starting",
-        environment=settings.environment,
-        version="2.0.0",
-    )
-    # ── Startup ───────────────────────────────────────────
-    # Connect infrastructure (lazy — each component connects on first use)
-    logger.info("Infrastructure connections will be established on first use")
-    yield
-    # ── Shutdown ──────────────────────────────────────────
-    logger.info("AIBE shutting down")
-    # Cleanup will be handled by individual component shutdown hooks
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Boot orchestrator, task tracker, meeting store; teardown on exit."""
+    from aibe.core.orchestrator.orchestrator import SystemOrchestrator
+    from aibe.core.task_tracker import TaskTracker
+    from aibe.core.meeting_store import MeetingStore
+    from aibe.ui.backend.ws_bridge import WSBridge
+    from aibe.ui.backend.routes.ws_routes import manager
+
+    orchestrator = SystemOrchestrator()
+    tracker = TaskTracker(orchestrator=orchestrator)
+    meeting_store = MeetingStore()
+
+    try:
+        await orchestrator.boot()
+        logger.info("Orchestrator booted successfully")
+
+        set_orchestrator(orchestrator)
+        set_task_tracker(tracker)
+        set_meeting_store(meeting_store)
+
+        await tracker.start()
+
+        bridge = WSBridge(orchestrator=orchestrator, manager=manager)
+        await bridge.start()
+
+        yield
+    except Exception:
+        logger.exception("Failed during lifespan")
+        raise
+    finally:
+        logger.info("Shutting down …")
+        try:
+            await bridge.stop()
+        except Exception:
+            pass
+        try:
+            await tracker.stop()
+        except Exception:
+            pass
+        try:
+            await orchestrator.shutdown()
+        except Exception:
+            pass
+        logger.info("Shutdown complete")
 
 
 def create_app() -> FastAPI:
-    """Create and configure the FastAPI application."""
-    settings = get_settings()
     app = FastAPI(
-        title="AIBE — AI Business Engine",
-        description="Autonomous AI company with 41 specialised agents",
+        title="AIBE v2.0",
         version="2.0.0",
-        docs_url="/docs" if not settings.is_production else None,
-        redoc_url="/redoc" if not settings.is_production else None,
         lifespan=lifespan,
     )
-    # ── CORS ──────────────────────────────────────────────
+
+    # --- CORS ----------------------------------------------------------------
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000", "http://localhost:5173"],
+        allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    # ── Routes ────────────────────────────────────────────
-    from aibe.ui.backend.routes import health, agents, tasks, meetings, costs, websocket
 
-    app.include_router(health.router, prefix="/api", tags=["Health"])
-    app.include_router(agents.router, prefix="/api/agents", tags=["Agents"])
-    app.include_router(tasks.router, prefix="/api/tasks", tags=["Tasks"])
-    app.include_router(meetings.router, prefix="/api/meetings", tags=["Meetings"])
-    app.include_router(costs.router, prefix="/api/costs", tags=["Costs"])
-    app.include_router(websocket.router, tags=["WebSocket"])
-    # ── Dashboard Static Files ────────────────────────────
-    frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
-    if frontend_dir.is_dir():
+    # --- Middleware -----------------------------------------------------------
+    from aibe.ui.backend.middleware.security import SecurityHeadersMiddleware
 
-        @app.get("/", include_in_schema=False)
-        async def dashboard() -> FileResponse:
-            return FileResponse(frontend_dir / "index.html")
+    app.add_middleware(SecurityHeadersMiddleware)
 
-        app.mount(
-            "/static",
-            StaticFiles(directory=str(frontend_dir)),
-            name="static",
-        )
-    logger.info("AIBE app created", routes=len(app.routes))
+    # --- Routes --------------------------------------------------------------
+    from aibe.ui.backend.routes.agent_routes import router as agent_router
+    from aibe.ui.backend.routes.cost_routes import router as cost_router
+    from aibe.ui.backend.routes.meeting_routes import router as meeting_router
+    from aibe.ui.backend.routes.metrics_routes import router as metrics_router
+    from aibe.ui.backend.routes.system_routes import router as system_router
+    from aibe.ui.backend.routes.task_routes import router as task_router
+    from aibe.ui.backend.routes.ws_routes import router as ws_router
+
+    app.include_router(agent_router)
+    app.include_router(task_router)
+    app.include_router(meeting_router)
+    app.include_router(cost_router)
+    app.include_router(system_router)
+    app.include_router(metrics_router)
+    app.include_router(ws_router)
+
+    # --- Health --------------------------------------------------------------
+    @app.get("/api/health")
+    async def health() -> dict:
+        from aibe.ui.backend.dependencies import _orchestrator
+
+        return {
+            "status": "ok",
+            "orchestrator": _orchestrator is not None,
+            "version": "2.0.0",
+        }
+
     return app
 
 
-# Uvicorn entrypoint
 app = create_app()
-__all__ = ["app", "create_app"]

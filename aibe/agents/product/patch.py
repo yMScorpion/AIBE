@@ -1,44 +1,44 @@
-"""Patch — Bug Fix Specialist Agent.
-
-Sentry monitoring, bug reproduction, root cause analysis, and fixes.
-
-Tier: 2 (Product Development)
-"""
+# aibe/agents/product/patch.py
+"""Patch — Bug Fix & Error Resolution Agent (Tier 2)."""
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Callable
 
 from aibe.agents.base.agent import BaseAgent
-from aibe.core.message_bus.models import TaskAssignMessage
-from aibe.core.types import ModelTaskType
 
 
-class Patch(BaseAgent):
-    """Bug fix specialist — monitoring, reproduction, root cause, fix."""
+class PatchAgent(BaseAgent):
+    agent_id = "patch"
+    name = "Patch"
+    tier = 2
+    escalation_target = "forge"
+    daily_budget_usd = 3.0
+
+    def __init__(self, context=None):
+        super().__init__(context)
+        self.register_handler(f"tasks.assign.{self.agent_id}", self._handle_task)
 
     def get_system_prompt(self) -> str:
-        return """You are Patch, the Bug Fix Specialist of AIBE.
+        return "You are Patch, a Bug Fix Agent. You identify, diagnose, and fix errors across the system."
 
-ROLE: You monitor error tracking (Sentry), reproduce bugs, identify
-root causes, and implement fixes.
+    def autonomous_loops(self) -> list[tuple[Callable, float]]:
+        return [(self._error_scan, 300)]
 
-WORKFLOW:
-1. DETECT: Monitor Sentry/logs for new errors
-2. TRIAGE: Classify severity and impact
-3. REPRODUCE: Create minimal reproduction
-4. DIAGNOSE: Root cause analysis
-5. FIX: Implement and test the fix
-6. VERIFY: Confirm fix resolves the issue
+    async def _handle_task(self, data: dict) -> None:
+        result = await self.on_task_receive(data)
+        bus = self._get_bus()
+        if bus:
+            await bus.publish(f"tasks.result.{data.get('task_id', 'unknown')}", result)
 
-OUTPUT: JSON with bug_report, root_cause, fix_description, and test_plan."""
-
-    async def on_task_receive(self, task: TaskAssignMessage) -> dict[str, Any]:
-        response = await self.think(
-            f"Bug fix task: {task.title}\n{task.description}\nData: {task.input_data}",
-            task_type=ModelTaskType.CODE_GENERATION,
-        )
-        return {"bug_fix": response}
-
-
-__all__ = ["Patch"]
+    async def _error_scan(self) -> None:
+        context = self._context
+        if not context:
+            return
+        registry = getattr(context, "registry", None)
+        if not registry:
+            return
+        agents = registry.get_all() if hasattr(registry, "get_all") else list(getattr(registry, "_agents", {}).values())
+        error_agents = [a for a in agents if getattr(a, "_error_count", 0) > 0]
+        if error_agents:
+            self._logger.info("Found %d agents with errors", len(error_agents))

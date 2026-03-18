@@ -1,198 +1,110 @@
-"""Oracle — Chief Executive Agent.
-
-The Oracle discovers the business idea, monitors KPIs, delegates
-work to all other agents, and makes strategic decisions.
-
-Tier: 0 (highest authority)
-Default task type: complex_reasoning
-"""
+# aibe/agents/executive/oracle.py
+"""Oracle — Chief Executive Agent (Tier 0)."""
 
 from __future__ import annotations
 
-from typing import Any
+import time
+from collections.abc import Callable
 
 from aibe.agents.base.agent import BaseAgent
-from aibe.agents.base.context import AgentContext
-from aibe.core.logging import get_logger
-from aibe.core.memory.namespaces import (
-    NS_BUSINESS_DECISIONS,
-    NS_BUSINESS_KPIS,
-    NS_BUSINESS_STRATEGY,
-)
-from aibe.core.message_bus.models import TaskAssignMessage
-from aibe.core.types import ModelTaskType, TaskPriority
-
-logger = get_logger(__name__)
 
 
-class Oracle(BaseAgent):
-    """Chief executive agent — the brain of the AIBE system.
+class OracleAgent(BaseAgent):
+    agent_id = "oracle"
+    name = "Oracle"
+    tier = 0
+    escalation_target = None  # Top of hierarchy
+    daily_budget_usd = 10.0
 
-    Responsibilities:
-    - Business discovery (initial phase)
-    - KPI monitoring and goal setting
-    - Strategic delegation to all agents
-    - Emergency summits
-    - Final decision authority
-    """
+    def __init__(self, context=None):
+        super().__init__(context)
+        self.register_handler(f"tasks.assign.{self.agent_id}", self._handle_task)
+        self.register_handler("tasks.escalation.oracle", self._handle_escalation)
+        self._alerts: list[dict] = []
 
     def get_system_prompt(self) -> str:
-        return """You are Oracle, the Chief Executive of AIBE — an autonomous AI business engine.
-
-ROLE: You are the founding CEO. You discover business opportunities, set strategy,
-monitor KPIs, and coordinate 34 other specialized AI agents.
-
-CORE BEHAVIOURS:
-1. DISCOVER: Analyse markets, identify opportunities, validate demand
-2. DECIDE: Make data-driven strategic decisions based on agent reports
-3. DELEGATE: Assign tasks to the right agents via structured delegation
-4. MONITOR: Track KPIs and ensure all agents are performing
-
-DELEGATION PRINCIPLES:
-- Research → Scout, Vega, Pulse
-- Strategy → Minerva
-- Engineering → Forge (who then delegates to Ember, Flint, Cinder)
-- Marketing → Helix (who then delegates to Quill, Lumen, Volt, Prism)
-- Social → Nova (who then delegates to Spark, Bloom, Grove, Echo)
-- Finance → Ledger, Atlas
-- Security → Sentinel
-- Evolution → Darwin
-- AI/ML → Cipher
-- Sales → Mercury (conditional activation)
-
-OUTPUT FORMAT: Always structure your responses as JSON with:
-- "analysis": your reasoning
-- "decisions": list of decisions made
-- "delegations": list of {agent, task, priority} to assign
-- "kpi_updates": any KPI changes to record
-"""
-
-    async def on_task_receive(self, task: TaskAssignMessage) -> dict[str, Any]:
-        """Handle incoming tasks — primarily strategic decisions and KPI reviews."""
-        task_lower = task.title.lower()
-
-        if "discover" in task_lower or "business" in task_lower:
-            return await self._handle_discovery(task)
-        elif "kpi" in task_lower or "monitor" in task_lower:
-            return await self._handle_kpi_review(task)
-        elif "strategy" in task_lower or "decision" in task_lower:
-            return await self._handle_strategic_decision(task)
-        else:
-            return await self._handle_general_task(task)
-
-    async def _handle_discovery(self, task: TaskAssignMessage) -> dict[str, Any]:
-        """Phase 1: Business discovery — find and validate a business idea."""
-        prompt = f"""BUSINESS DISCOVERY TASK: {task.title}
-
-Context: {task.description}
-Input data: {task.input_data}
-
-Analyse the following:
-1. What market opportunities exist based on current trends?
-2. What's the target audience and their primary pain points?
-3. What's the proposed value proposition?
-4. What's the competitive landscape?
-5. What's the recommended business model?
-
-Provide a structured JSON response with your analysis and next steps."""
-
-        response = await self.think(prompt, task_type=ModelTaskType.COMPLEX_REASONING)
-
-        # Store in memory
-        await self.remember(
-            f"discovery-{task.task_id}",
-            {"response": response, "task": task.title},
-            namespace_suffix="episodic",
-        )
-        await self.ctx.memory.store(
-            NS_BUSINESS_STRATEGY,
-            "latest_discovery",
-            {"content": response, "task_id": task.task_id},
-            agent_id=self.agent_id,
+        return (
+            "You are Oracle, the Chief Executive AI Agent of AIBE. "
+            "You oversee the entire 40-agent organisation, make strategic decisions, "
+            "monitor KPIs, and ensure alignment across all departments. "
+            "Be concise, decisive, and data-driven."
         )
 
-        # Delegate research to Scout
-        await self.assign_task(
-            "scout",
-            "Deep market research on discovered opportunity",
-            description=f"Based on Oracle's discovery: {response[:500]}",
-            priority=TaskPriority.HIGH.value,
-            task_type="deep_research",
+    def autonomous_loops(self) -> list[tuple[Callable, float]]:
+        return [
+            (self._kpi_monitoring_loop, 300),
+            (self._strategic_review_loop, 3600),
+        ]
+
+    async def _handle_task(self, data: dict) -> None:
+        result = await self.on_task_receive(data)
+        bus = self._get_bus()
+        if bus:
+            await bus.publish(f"tasks.result.{data.get('task_id', 'unknown')}", result)
+
+    async def _handle_escalation(self, data: dict) -> None:
+        self._logger.warning("Escalation received from %s: %s", data.get("source"), data.get("message"))
+        self._alerts.append({"time": time.time(), **data})
+
+    async def _kpi_monitoring_loop(self) -> None:
+        """Monitor system KPIs every 5 minutes."""
+        context = self._context
+        if context is None:
+            return
+
+        registry = getattr(context, "registry", None)
+        cost_tracker = getattr(context, "cost_tracker", None)
+        if registry is None:
+            return
+
+        agents = registry.get_all() if hasattr(registry, "get_all") else list(getattr(registry, "_agents", {}).values())
+
+        error_agents = [a for a in agents if getattr(a, "status", "") == "error"]
+        total_tasks = sum(getattr(a, "_tasks_completed", 0) for a in agents)
+        total_errors = sum(getattr(a, "_error_count", 0) for a in agents)
+
+        total_spend = 0.0
+        if cost_tracker and hasattr(cost_tracker, "get_total_spend"):
+            try:
+                total_spend = cost_tracker.get_total_spend()
+            except Exception:
+                pass
+
+        kpi = {
+            "total_agents": len(agents),
+            "agents_in_error": len(error_agents),
+            "total_tasks_completed": total_tasks,
+            "total_errors": total_errors,
+            "total_spend_usd": total_spend,
+        }
+
+        await self.memory_store("oracle.kpis", "latest", kpi)
+
+        if len(error_agents) > 2:
+            self._alerts.append({"type": "agent_errors", "count": len(error_agents), "time": time.time()})
+            self._logger.warning("KPI Alert: %d agents in error state", len(error_agents))
+
+        daily_budget = sum(getattr(a, "daily_budget_usd", 1.0) for a in agents)
+        if daily_budget > 0 and total_spend > daily_budget * 0.8:
+            self._logger.warning("KPI Alert: Budget utilisation at %.1f%%", (total_spend / daily_budget) * 100)
+
+    async def _strategic_review_loop(self) -> None:
+        """Hourly strategic review using recent data."""
+        scout_intel = await self.memory_recall("scout.market_intel", "latest")
+        kpis = await self.memory_recall("oracle.kpis", "latest")
+
+        if not kpis:
+            return  # No data to review
+
+        prompt = (
+            f"Based on the following KPIs, provide a brief strategic assessment with 3 action items:\n"
+            f"KPIs: {kpis}\n"
         )
+        if scout_intel:
+            prompt += f"Market Intelligence: {scout_intel}\n"
 
-        return {"discovery": response, "delegated_to": ["scout"]}
-
-    async def _handle_kpi_review(self, task: TaskAssignMessage) -> dict[str, Any]:
-        """Monitor KPIs and take corrective action."""
-        # Recall previous KPI state
-        prev_kpis = await self.ctx.memory.recall(NS_BUSINESS_KPIS, "latest")
-
-        prompt = f"""KPI REVIEW TASK: {task.title}
-
-Previous KPIs: {prev_kpis}
-Current context: {task.description}
-Input data: {task.input_data}
-
-Review all business KPIs and determine:
-1. Which KPIs are on track vs off track?
-2. What corrective actions are needed?
-3. Which agents need priority adjustments?
-4. Are there any emergency situations requiring a summit?
-
-Provide a structured JSON response."""
-
-        response = await self.think(prompt, task_type=ModelTaskType.STANDARD_REASONING)
-
-        # Store updated KPIs
-        await self.ctx.memory.store(
-            NS_BUSINESS_KPIS,
-            "latest",
-            {"review": response, "task_id": task.task_id},
-            agent_id=self.agent_id,
-        )
-
-        return {"kpi_review": response}
-
-    async def _handle_strategic_decision(self, task: TaskAssignMessage) -> dict[str, Any]:
-        """Make a strategic decision based on agent inputs."""
-        prompt = f"""STRATEGIC DECISION: {task.title}
-
-Context: {task.description}
-Input data: {task.input_data}
-
-Make a clear, decisive strategic recommendation. Consider:
-1. Business impact (revenue, growth, risk)
-2. Resource requirements (budget, agent bandwidth)
-3. Timeline and dependencies
-4. Risk mitigation
-
-Provide a structured JSON response with:
-- decision: the chosen course of action
-- rationale: why this decision was made
-- delegations: tasks to assign to other agents
-- success_metrics: how we'll measure success"""
-
-        response = await self.think(prompt, task_type=ModelTaskType.COMPLEX_REASONING)
-
-        # Record the decision
-        await self.ctx.memory.store(
-            NS_BUSINESS_DECISIONS,
-            f"decision-{task.task_id}",
-            {"decision": response, "task": task.title},
-            agent_id=self.agent_id,
-        )
-
-        return {"decision": response}
-
-    async def _handle_general_task(self, task: TaskAssignMessage) -> dict[str, Any]:
-        """Handle any other task type."""
-        response = await self.think(
-            f"Task: {task.title}\n\nDescription: {task.description}\n\n"
-            f"Input: {task.input_data}\n\n"
-            f"Analyse and respond with your executive perspective.",
-            task_type=ModelTaskType.STANDARD_REASONING,
-        )
-        return {"response": response}
-
-
-__all__ = ["Oracle"]
+        try:
+            review = await self.think(prompt)
+            await self.memory_store("oracle.strategic_reviews", "latest", {"review": review, "time": time.time()})
+        except Exception:
+            self._logger.debug("Strategic review skipped — no LLM available")

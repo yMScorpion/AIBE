@@ -1,8 +1,5 @@
-"""AIBE exception hierarchy.
-
-All custom exceptions inherit from AIBEError, allowing callers to
-catch broad categories or specific failures as needed.
-"""
+# aibe/core/exceptions.py
+"""Custom exceptions for AIBE system."""
 
 from __future__ import annotations
 
@@ -10,235 +7,92 @@ from __future__ import annotations
 class AIBEError(Exception):
     """Base exception for all AIBE errors."""
 
-    def __init__(self, message: str = "", *, details: dict[str, object] | None = None) -> None:
-        super().__init__(message)
-        self.details = details or {}
-
-
-# ── Infrastructure errors ─────────────────────────────────────
-
-
-class BusError(AIBEError):
-    """NATS message bus communication failure."""
-
-
-class BusConnectionError(BusError):
-    """Cannot connect to NATS server."""
-
-
-class BusPublishError(BusError):
-    """Failed to publish a message."""
-
-
-class BusSubscriptionError(BusError):
-    """Failed to subscribe to a subject."""
-
-
-class MemoryError(AIBEError):  # noqa: A001  — intentional shadow of builtins
-    """OpenViking memory system failure."""
-
-
-class MemoryConnectionError(MemoryError):
-    """Cannot connect to OpenViking."""
-
-
-class MemoryWriteError(MemoryError):
-    """Failed to write to OpenViking namespace."""
-
-
-class MemoryReadError(MemoryError):
-    """Failed to read from OpenViking namespace."""
-
-
-class RouterError(AIBEError):
-    """LLM model routing failure."""
-
-
-class RouterModelUnavailableError(RouterError):
-    """All models in the fallback chain are unavailable."""
-
-
-class RouterBudgetExceededError(RouterError):
-    """Agent has exceeded its daily LLM budget."""
-
-    def __init__(
-        self,
-        message: str = "Daily LLM budget exceeded",
-        *,
-        agent_id: str = "",
-        budget_limit: float = 0.0,
-        current_spend: float = 0.0,
-    ) -> None:
-        super().__init__(
-            message,
-            details={
-                "agent_id": agent_id,
-                "budget_limit": budget_limit,
-                "current_spend": current_spend,
-            },
-        )
-        self.agent_id = agent_id
-        self.budget_limit = budget_limit
-        self.current_spend = current_spend
-
-
-class RouterValidationError(RouterError):
-    """Structured output validation failed after all retries."""
-
-
-class BrowserError(AIBEError):
-    """Lightpanda browser automation failure."""
-
-
-class BrowserPoolExhaustedError(BrowserError):
-    """No browser instances available in the pool."""
-
-
-class BrowserNavigationError(BrowserError):
-    """Failed to navigate to URL."""
-
-
-class VaultError(AIBEError):
-    """HashiCorp Vault secrets management failure."""
-
-
-class VaultConnectionError(VaultError):
-    """Cannot connect to Vault server."""
-
-
-class VaultSecretNotFoundError(VaultError):
-    """Requested secret path does not exist."""
-
-
-class VMError(AIBEError):
-    """Docker-based VM sandbox failure."""
-
-
-class VMCreationError(VMError):
-    """Failed to create sandbox container."""
-
-
-class VMExecutionError(VMError):
-    """Command execution inside sandbox failed."""
-
-
-class VMTimeoutError(VMError):
-    """Sandbox execution exceeded time limit."""
-
-
-# ── Agent errors ──────────────────────────────────────────────
-
-
-class AgentError(AIBEError):
-    """Agent lifecycle or execution failure."""
-
-
-class AgentStartupError(AgentError):
-    """Agent failed to start."""
-
-
-class AgentTaskError(AgentError):
-    """Agent failed to execute a task."""
-
-
-class AgentEscalationError(AgentError):
-    """Agent escalation to higher tier failed."""
-
-
-# ── Security errors ───────────────────────────────────────────
-
-
-class SecurityError(AIBEError):
-    """Security subsystem failure."""
-
-
-class SecurityGateBlockedError(SecurityError):
-    """Deployment blocked by security gate due to unresolved findings."""
-
-
-class SecurityScanError(SecurityError):
-    """Security scan tool execution failed."""
-
-
-# ── Budget errors ─────────────────────────────────────────────
+    pass
 
 
 class BudgetExceededError(AIBEError):
-    """A budget limit has been exceeded (ads, contractors, etc.)."""
+    """Raised when an agent exceeds its daily budget."""
 
-    def __init__(
-        self,
-        message: str = "Budget exceeded",
-        *,
-        category: str = "",
-        limit: float = 0.0,
-        current: float = 0.0,
-    ) -> None:
+    def __init__(self, agent_id: str, budget: float, spent: float, requested: float) -> None:
+        self.agent_id = agent_id
+        self.budget = budget
+        self.spent = spent
+        self.requested = requested
         super().__init__(
-            message,
-            details={"category": category, "limit": limit, "current": current},
+            f"Agent '{agent_id}' budget exceeded: "
+            f"${spent:.4f} spent + ${requested:.4f} requested > ${budget:.4f} budget"
         )
-        self.category = category
-        self.limit = limit
-        self.current = current
 
 
-# ── Task delegation errors ────────────────────────────────────
+class AgentNotFoundError(AIBEError):
+    """Raised when an agent is not found in the registry."""
+
+    def __init__(self, agent_id: str) -> None:
+        self.agent_id = agent_id
+        super().__init__(f"Agent not found: {agent_id}")
 
 
-class TaskValidationError(AIBEError):
-    """Task failed validation checks before assignment."""
+class AgentStartError(AIBEError):
+    """Raised when an agent fails to start."""
+
+    def __init__(self, agent_id: str, reason: str) -> None:
+        self.agent_id = agent_id
+        self.reason = reason
+        super().__init__(f"Agent '{agent_id}' failed to start: {reason}")
 
 
-class TaskRoutingError(AIBEError):
-    """No suitable agent found for task assignment."""
+class TaskExecutionError(AIBEError):
+    """Raised when a task execution fails."""
+
+    def __init__(self, task_id: str, agent_id: str, reason: str) -> None:
+        self.task_id = task_id
+        self.agent_id = agent_id
+        self.reason = reason
+        super().__init__(f"Task '{task_id}' failed on agent '{agent_id}': {reason}")
 
 
-# ── Meeting errors ────────────────────────────────────────────
+class EscalationError(AIBEError):
+    """Raised when an escalation cannot be processed."""
+
+    def __init__(self, source: str, target: str, reason: str) -> None:
+        self.source = source
+        self.target = target
+        self.reason = reason
+        super().__init__(f"Escalation from '{source}' to '{target}' failed: {reason}")
 
 
-class MeetingError(AIBEError):
-    """Meeting engine failure."""
+class ConfigurationError(AIBEError):
+    """Raised when configuration is invalid."""
+
+    def __init__(self, key: str, reason: str) -> None:
+        self.key = key
+        self.reason = reason
+        super().__init__(f"Configuration error for '{key}': {reason}")
 
 
-class MeetingQuorumError(MeetingError):
-    """Not enough participants available for meeting."""
+class InfrastructureError(AIBEError):
+    """Raised when infrastructure components fail."""
+
+    def __init__(self, component: str, reason: str) -> None:
+        self.component = component
+        self.reason = reason
+        super().__init__(f"Infrastructure '{component}' error: {reason}")
 
 
-__all__ = [
-    "AIBEError",
-    "AgentError",
-    "AgentEscalationError",
-    "AgentStartupError",
-    "AgentTaskError",
-    "BrowserError",
-    "BrowserNavigationError",
-    "BrowserPoolExhaustedError",
-    "BudgetExceededError",
-    "BusConnectionError",
-    "BusError",
-    "BusPublishError",
-    "BusSubscriptionError",
-    "MeetingError",
-    "MeetingQuorumError",
-    "MemoryConnectionError",
-    "MemoryError",
-    "MemoryReadError",
-    "MemoryWriteError",
-    "RouterBudgetExceededError",
-    "RouterError",
-    "RouterModelUnavailableError",
-    "RouterValidationError",
-    "SecurityError",
-    "SecurityGateBlockedError",
-    "SecurityScanError",
-    "TaskRoutingError",
-    "TaskValidationError",
-    "VMCreationError",
-    "VMError",
-    "VMExecutionError",
-    "VMTimeoutError",
-    "VaultConnectionError",
-    "VaultError",
-    "VaultSecretNotFoundError",
-]
+class ToolExecutionError(AIBEError):
+    """Raised when a tool execution fails."""
+
+    def __init__(self, tool_name: str, reason: str) -> None:
+        self.tool_name = tool_name
+        self.reason = reason
+        super().__init__(f"Tool '{tool_name}' execution failed: {reason}")
+
+
+class WorkflowError(AIBEError):
+    """Raised when a workflow execution fails."""
+
+    def __init__(self, workflow_id: str, step_id: str, reason: str) -> None:
+        self.workflow_id = workflow_id
+        self.step_id = step_id
+        self.reason = reason
+        super().__init__(f"Workflow '{workflow_id}' failed at step '{step_id}': {reason}")
