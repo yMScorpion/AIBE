@@ -41,7 +41,7 @@ export default function Office2DDepthPage() {
   const [chatInput, setChatInput] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [sending, setSending] = useState(false);
-  const [renderTick, setRenderTick] = useState(0);
+  const [, setRenderTick] = useState(0);
   const [chatLog, setChatLog] = useState<ChatMessage[]>([
     {
       id: crypto.randomUUID(),
@@ -148,7 +148,18 @@ export default function Office2DDepthPage() {
       targetIds.add(numericId);
       if (!os.characters.has(numericId)) {
         const meta = ALL_AGENTS.find((agent) => agent.id === agentId);
-        os.addAgent(numericId, undefined, undefined, undefined, true, meta?.name);
+        
+        let dept = "executive";
+        if (meta?.tierName === "AI / ML") dept = "ml";
+        else if (meta?.tierName) dept = meta.tierName.toLowerCase();
+
+        // Assign a random seat from that department
+        // Assuming there are max 4 seats per department (0 to 3)
+        // officeState will fall back to any free seat if this specific one is taken
+        const randomSeatIdx = Math.floor(Math.random() * 4);
+        const preferredSeat = `seat-${dept}-${randomSeatIdx}`;
+
+        os.addAgent(numericId, undefined, undefined, preferredSeat, true, meta?.name);
       }
     }
     for (const numericId of Array.from(os.characters.keys())) {
@@ -165,6 +176,42 @@ export default function Office2DDepthPage() {
       if (!numericId) continue;
       os.setAgentActive(numericId, agent.isActive);
       os.setAgentTool(numericId, agent.inMeeting ? "Meeting" : agent.isActive ? "Working" : null);
+      
+      if (agent.inMeeting) {
+        const currentSeat = os.characters.get(numericId)?.seatId;
+        if (!currentSeat || !currentSeat.startsWith("seat-meeting")) {
+          let meetingSeat = null;
+          for (const [uid, seat] of os.seats) {
+            if (uid.startsWith("seat-meeting") && !seat.assigned) {
+              meetingSeat = uid;
+              break;
+            }
+          }
+          if (meetingSeat) {
+            os.reassignSeat(numericId, meetingSeat);
+          }
+        }
+      } else {
+        const currentSeat = os.characters.get(numericId)?.seatId;
+        if (currentSeat && currentSeat.startsWith("seat-meeting")) {
+           let dept = "executive";
+           const meta = ALL_AGENTS.find((a) => a.id === agent.id);
+           if (meta?.tierName === "AI / ML") dept = "ml";
+           else if (meta?.tierName) dept = meta.tierName.toLowerCase();
+           
+           let newSeat = null;
+           for (const [uid, seat] of os.seats) {
+             if (uid.startsWith(`seat-${dept}`) && !seat.assigned) {
+               newSeat = uid;
+               break;
+             }
+           }
+           if (newSeat) {
+             os.reassignSeat(numericId, newSeat);
+           }
+        }
+      }
+
       if (agent.status === "waiting") {
         os.showWaitingBubble(numericId);
       }

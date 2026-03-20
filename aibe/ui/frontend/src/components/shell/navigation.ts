@@ -11,6 +11,8 @@ import {
   Dna,
   Landmark,
   Settings,
+  Briefcase,
+  Lightbulb
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -24,6 +26,8 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Dashboard", shortLabel: "DB", icon: LayoutDashboard, badge: "Live" },
+  { href: "/executive", label: "Executive", shortLabel: "EX", icon: Briefcase },
+  { href: "/research", label: "Research", shortLabel: "RS", icon: Lightbulb },
   { href: "/office-3d", label: "Pixel Office", shortLabel: "2D", icon: Box, badge: "Live" },
   { href: "/meetings", label: "War Room", shortLabel: "WR", icon: Users },
   { href: "/product", label: "Builder View", shortLabel: "BV", icon: Wrench },

@@ -272,6 +272,18 @@ export class OfficeState {
         seatId = preferredSeatId;
       }
     }
+
+    // If preferred seat is taken, try to find another seat in the same department
+    if (!seatId && preferredSeatId) {
+      const deptPrefix = preferredSeatId.split('-').slice(0, 2).join('-'); // e.g. "seat-executive"
+      for (const [uid, seat] of this.seats) {
+        if (uid.startsWith(deptPrefix) && !seat.assigned) {
+          seatId = uid;
+          break;
+        }
+      }
+    }
+
     if (!seatId) {
       seatId = this.findFreeSeat();
     }

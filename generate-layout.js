@@ -1,7 +1,7 @@
 const fs = require('fs');
 
-const cols = 50;
-const rows = 40;
+const cols = 100;
+const rows = 80;
 const tiles = new Array(cols * rows).fill(255); // VOID
 
 // Helper to fill a rect with a tile
@@ -30,128 +30,109 @@ function drawRoom(c, r, w, h, floorTile, doorC, doorR) {
   }
 }
 
-// 0: WALL, 1: FLOOR_1, 2: FLOOR_2, etc
 // Outline wall
-fillRect(2, 2, 46, 36, 1); // Fill whole floor with FLOOR_1
+fillRect(2, 2, 96, 76, 1); // Fill whole floor with FLOOR_1
 // Outer walls
-fillRect(2, 2, 46, 1, 0); // Top wall
-fillRect(2, 37, 46, 1, 0); // Bottom wall
-fillRect(2, 2, 1, 36, 0); // Left wall
-fillRect(47, 2, 1, 36, 0); // Right wall
+fillRect(2, 2, 96, 1, 0); // Top wall
+fillRect(2, 77, 96, 1, 0); // Bottom wall
+fillRect(2, 2, 1, 76, 0); // Left wall
+fillRect(97, 2, 1, 76, 0); // Right wall
 
-// Corridors
-// The main corridor is the space that is left after drawing rooms.
-// We will draw the rooms.
-
-// Executive Room (Top Left)
-drawRoom(2, 2, 14, 12, 5, 10, 13); // Door at bottom
-
-// Meeting Room (Top Right)
-drawRoom(30, 2, 18, 14, 2, 30, 10); // Door at left
-
-// Break Room / Cafe (Middle)
-drawRoom(16, 14, 14, 12, 4, 21, 25); // Door at bottom
-
-// Engineering / Dev Room (Bottom Left)
-drawRoom(2, 20, 18, 18, 3, 19, 24); // Door at right
-
-// Marketing / Sales (Bottom Right)
-drawRoom(28, 24, 20, 14, 6, 28, 28); // Door at left
-
-// Furniture
 const furniture = [];
 let uidCounter = 0;
-function addFurn(type, c, r) {
-  furniture.push({ uid: `f-gen-${uidCounter++}`, type, col: c, row: r });
+function addFurn(type, c, r, uid = null) {
+  furniture.push({ uid: uid || `f-gen-${uidCounter++}`, type, col: c, row: r });
 }
 
-// Exec Room Furniture
-addFurn("DESK_FRONT", 6, 6);
-addFurn("PC_FRONT_OFF", 6, 6);
-addFurn("CUSHIONED_CHAIR_SIDE:left", 8, 6);
-addFurn("PLANT", 3, 3);
-addFurn("LARGE_PAINTING", 6, 2);
-addFurn("COFFEE_TABLE", 10, 5);
-addFurn("SOFA_FRONT", 10, 4);
-addFurn("DOUBLE_BOOKSHELF", 12, 2);
-
-// Meeting Room
-addFurn("TABLE_FRONT", 34, 6);
-addFurn("TABLE_FRONT", 36, 6);
-addFurn("TABLE_FRONT", 38, 6);
-addFurn("TABLE_FRONT", 40, 6);
-addFurn("WOODEN_CHAIR_BACK", 34, 7);
-addFurn("WOODEN_CHAIR_BACK", 36, 7);
-addFurn("WOODEN_CHAIR_BACK", 38, 7);
-addFurn("WOODEN_CHAIR_BACK", 40, 7);
-addFurn("WOODEN_CHAIR_FRONT", 34, 5);
-addFurn("WOODEN_CHAIR_FRONT", 36, 5);
-addFurn("WOODEN_CHAIR_FRONT", 38, 5);
-addFurn("WOODEN_CHAIR_FRONT", 40, 5);
-addFurn("WOODEN_CHAIR_SIDE", 33, 6);
-addFurn("WOODEN_CHAIR_SIDE:left", 42, 6);
-addFurn("PLANT_2", 45, 3);
-addFurn("WHITEBOARD", 36, 2);
-addFurn("WHITEBOARD", 38, 2);
-
-// Engineering
-for(let i=0; i<3; i++) {
-  addFurn("DESK_FRONT", 5, 23 + i*4);
-  addFurn("PC_FRONT_OFF", 5, 23 + i*4);
-  addFurn("CUSHIONED_CHAIR_SIDE", 6, 23 + i*4);
-
-  addFurn("DESK_FRONT", 11, 23 + i*4);
-  addFurn("PC_FRONT_OFF", 11, 23 + i*4);
-  addFurn("CUSHIONED_CHAIR_SIDE:left", 10, 23 + i*4);
+// Function to populate a standard department room
+function populateDeptRoom(c, r, w, h, deptName) {
+  // Add desks and chairs
+  // Put them in 2 rows
+  let seatIdx = 0;
+  for(let i=0; i<2; i++) {
+    for(let j=0; j<2; j++) {
+      let dx = c + 4 + i * 6;
+      let dy = r + 4 + j * 6;
+      addFurn("DESK_FRONT", dx, dy);
+      addFurn("PC_FRONT_OFF", dx, dy);
+      addFurn("CUSHIONED_CHAIR_SIDE", dx + 1, dy, `seat-${deptName}-${seatIdx++}`);
+    }
+  }
+  addFurn("DOUBLE_BOOKSHELF", c + 2, r + 2);
+  addFurn("PLANT", c + w - 3, r + 2);
+  addFurn("BIN", c + w - 3, r + h - 3);
+  addFurn("WHITEBOARD", c + w - 2, r + Math.floor(h/2));
 }
-addFurn("DOUBLE_BOOKSHELF", 5, 20);
-addFurn("PLANT", 3, 21);
-addFurn("BIN", 15, 21);
 
-// Marketing
-for(let i=0; i<2; i++) {
-  addFurn("DESK_FRONT", 31, 26 + i*4);
-  addFurn("PC_FRONT_OFF", 31, 26 + i*4);
-  addFurn("WOODEN_CHAIR_SIDE", 32, 26 + i*4);
+// Top row rooms (y=2 to 22) -> w=16, h=20
+// Rooms: Exec, Research, Evo, Product, Marketing
+let xOffsets = [2, 22, 42, 62, 82];
+let floors = [5, 2, 3, 6, 7];
+let deptsTop = ["executive", "research", "evolution", "product", "marketing"];
 
-  addFurn("DESK_FRONT", 37, 26 + i*4);
-  addFurn("PC_FRONT_OFF", 37, 26 + i*4);
-  addFurn("WOODEN_CHAIR_SIDE:left", 36, 26 + i*4);
+for (let i = 0; i < 5; i++) {
+  let x = xOffsets[i];
+  drawRoom(x, 2, 16, 20, floors[i], x + 7, 21); // door at bottom
+  populateDeptRoom(x, 2, 16, 20, deptsTop[i]);
 }
-addFurn("PLANT", 45, 25);
-addFurn("BIN", 45, 35);
-addFurn("WHITEBOARD", 35, 24);
 
-// Cafe
-addFurn("COFFEE_TABLE", 18, 18);
-addFurn("SOFA_FRONT", 18, 17);
-addFurn("SOFA_BACK", 18, 20);
-addFurn("COFFEE", 18, 18);
-addFurn("BIN", 27, 15);
-addFurn("PLANT", 17, 15);
-addFurn("TABLE_FRONT", 24, 18);
-addFurn("WOODEN_BENCH", 24, 19);
-addFurn("WOODEN_BENCH", 24, 17);
+// Bottom row rooms (y=58 to 78) -> w=16, h=20
+// Rooms: Social, Security, Sales, ML, Finance
+let floorsBottom = [8, 9, 2, 3, 4];
+let deptsBottom = ["social", "security", "sales", "ml", "finance"];
+for (let i = 0; i < 5; i++) {
+  let x = xOffsets[i];
+  drawRoom(x, 58, 16, 20, floorsBottom[i], x + 7, 58); // door at top
+  populateDeptRoom(x, 58, 16, 20, deptsBottom[i]);
+}
 
-// New recreational items
-addFurn("POOL_TABLE", 18, 22); // 2x3 footprint
-addFurn("PING_PONG", 25, 20);  // 2x3 footprint
-addFurn("TV", 26, 15);         // 2x2 footprint
+// Meeting Room: x=4 to 48, y=28 to 52 (w=44, h=24)
+drawRoom(4, 28, 44, 24, 2, 24, 28); // Door at top
+// Huge meeting table
+for(let i=0; i<10; i++) {
+  addFurn("TABLE_FRONT", 12 + i*2, 38);
+  addFurn("WOODEN_CHAIR_BACK", 12 + i*2, 39, `seat-meeting-top-${i}`);
+  addFurn("WOODEN_CHAIR_FRONT", 12 + i*2, 37, `seat-meeting-bottom-${i}`);
+}
+addFurn("WOODEN_CHAIR_SIDE", 11, 38);
+addFurn("WOODEN_CHAIR_SIDE:left", 32, 38);
+addFurn("WHITEBOARD", 24, 29);
+addFurn("WHITEBOARD", 26, 29);
+addFurn("PLANT_2", 6, 30);
+addFurn("PLANT_2", 44, 30);
 
-// Hallways / Corridors Plants
-addFurn("PLANT_2", 20, 3);
-addFurn("PLANT", 20, 35);
-addFurn("PLANT", 25, 35);
-addFurn("BIN", 25, 23);
+// Break Room: x=52 to 96, y=28 to 52 (w=44, h=24)
+drawRoom(52, 28, 44, 24, 4, 72, 28); // Door at top
+// Break room furniture
+addFurn("COFFEE_TABLE", 60, 36);
+addFurn("SOFA_FRONT", 60, 35);
+addFurn("SOFA_BACK", 60, 38);
+addFurn("COFFEE", 60, 36);
+
+addFurn("TABLE_FRONT", 75, 36);
+addFurn("WOODEN_BENCH", 75, 37);
+addFurn("WOODEN_BENCH", 75, 35);
+
+addFurn("TABLE_FRONT", 85, 36);
+addFurn("WOODEN_BENCH", 85, 37);
+addFurn("WOODEN_BENCH", 85, 35);
+
+addFurn("POOL_TABLE", 65, 45); // 2x3 footprint
+addFurn("PING_PONG", 75, 45);  // 2x3 footprint
+addFurn("TV", 85, 45);         // 2x2 footprint
+
+addFurn("PLANT", 55, 30);
+addFurn("PLANT", 90, 30);
+addFurn("BIN", 90, 50);
 
 const layout = {
   version: 1,
   cols,
   rows,
-  layoutRevision: 4,
+  layoutRevision: 5,
   tiles,
   furniture
 };
 
 fs.writeFileSync('c:/Users/ADRIANO/AIDA/aibe/ui/frontend/public/pixel-agents/assets/default-layout-1.json', JSON.stringify(layout));
-console.log('Layout generated');
+console.log('Layout generated with 10 rooms, meeting room, and break room.');

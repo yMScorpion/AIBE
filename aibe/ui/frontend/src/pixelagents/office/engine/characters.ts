@@ -184,7 +184,17 @@ export function updateCharacter(
           }
         }
         if (walkableTiles.length > 0) {
-          const target = walkableTiles[Math.floor(Math.random() * walkableTiles.length)];
+          // Break room coordinates (approx based on layout: x=52..96, y=28..52)
+          const breakRoomTiles = walkableTiles.filter(t => t.col >= 52 && t.col <= 96 && t.row >= 28 && t.row <= 52);
+          
+          let target;
+          // 80% chance to go to break room when idle
+          if (breakRoomTiles.length > 0 && Math.random() < 0.8) {
+            target = breakRoomTiles[Math.floor(Math.random() * breakRoomTiles.length)];
+          } else {
+            target = walkableTiles[Math.floor(Math.random() * walkableTiles.length)];
+          }
+          
           const path = findPath(
             ch.tileCol,
             ch.tileRow,

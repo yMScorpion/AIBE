@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Image from "next/image";
 import { useWsStore } from "@/stores/ws-store";
 import { useAgentStore } from "../../stores/agent-store";
 import { Bell, Search, Terminal } from "lucide-react";
@@ -10,7 +11,6 @@ interface SystemStatusBarProps {
 }
 
 export function SystemStatusBar({ onOpenNotifications }: SystemStatusBarProps) {
-  const connected = useWsStore((s) => s.connected);
   const events = useWsStore((s) => s.events);
   const agents = useAgentStore((s) => s.agents);
   const runningCount = useMemo(
@@ -18,7 +18,6 @@ export function SystemStatusBar({ onOpenNotifications }: SystemStatusBarProps) {
     [agents],
   );
   const spend = useAgentStore((s) => s.spendToday);
-  const pendingTasks = useAgentStore((s) => s.pendingTasks);
 
   return (
     <header className="sticky top-4 z-20 mb-6 flex items-center justify-between gap-4 rounded-3xl bg-card/40 backdrop-blur-md border border-white/5 px-6 py-4 shadow-sm">
@@ -64,7 +63,7 @@ export function SystemStatusBar({ onOpenNotifications }: SystemStatusBarProps) {
           </div>
           <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyber-cyan to-cyber-purple p-[2px] shadow-sm">
             <div className="h-full w-full rounded-[10px] bg-card overflow-hidden">
-              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Adriano" alt="Profile" className="h-full w-full object-cover" />
+              <Image src="https://github.com/shadcn.png" alt="User avatar" width={24} height={24} className="rounded-full" />
             </div>
           </div>
         </div>
