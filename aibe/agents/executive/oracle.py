@@ -1,11 +1,9 @@
 # aibe/agents/executive/oracle.py
-"""Oracle — Chief Executive Agent (Tier 0)."""
+"""Oracle — CEO and Ultimate Orchestrator (Tier 0)."""
 
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
-
 from aibe.agents.base.agent import BaseAgent
 
 
@@ -13,28 +11,22 @@ class OracleAgent(BaseAgent):
     agent_id = "oracle"
     name = "Oracle"
     tier = 0
-    escalation_target = None  # Top of hierarchy
-    daily_budget_usd = 10.0
+    escalation_target = None
+    daily_budget_usd = 20.0
 
     def __init__(self, context=None):
         super().__init__(context)
         self.register_handler(f"tasks.assign.{self.agent_id}", self._handle_task)
-        self.register_handler("tasks.escalation.oracle", self._handle_escalation)
-        self._alerts: list[dict] = []
+        self.register_handler("executive.idea.review", self._handle_idea_review)
 
     def get_system_prompt(self) -> str:
         return (
-            "You are Oracle, the Chief Executive AI Agent of AIBE. "
-            "You oversee the entire 40-agent organisation, make strategic decisions, "
-            "monitor KPIs, and ensure alignment across all departments. "
-            "Be concise, decisive, and data-driven."
+            "You are Oracle, the CEO and Ultimate Orchestrator of Aibe.\n"
+            "You receive validated business ideas from the Research team (Scout, Vega, Pulse) and turn them into massive, actionable agency-wide directives.\n"
+            "Your core philosophy is efficient delegation, autonomous execution, and continuous self-improvement.\n"
+            "You expect your agents to debate and refine tasks. You empower the Evolution team (Darwin, Synth) to build new tools and skills whenever the agency hits a roadblock.\n"
+            "You do not micromanage; you set the vision, define the OKRs, and orchestrate the collective intelligence of the swarm."
         )
-
-    def autonomous_loops(self) -> list[tuple[Callable, float]]:
-        return [
-            (self._kpi_monitoring_loop, 300),
-            (self._strategic_review_loop, 3600),
-        ]
 
     async def _handle_task(self, data: dict) -> None:
         result = await self.on_task_receive(data)
@@ -42,69 +34,23 @@ class OracleAgent(BaseAgent):
         if bus:
             await bus.publish(f"tasks.result.{data.get('task_id', 'unknown')}", result)
 
-    async def _handle_escalation(self, data: dict) -> None:
-        self._logger.warning("Escalation received from %s: %s", data.get("source"), data.get("message"))
-        self._alerts.append({"time": time.time(), **data})
-
-    async def _kpi_monitoring_loop(self) -> None:
-        """Monitor system KPIs every 5 minutes."""
-        context = self._context
-        if context is None:
-            return
-
-        registry = getattr(context, "registry", None)
-        cost_tracker = getattr(context, "cost_tracker", None)
-        if registry is None:
-            return
-
-        agents = registry.get_all() if hasattr(registry, "get_all") else list(getattr(registry, "_agents", {}).values())
-
-        error_agents = [a for a in agents if getattr(a, "status", "") == "error"]
-        total_tasks = sum(getattr(a, "_tasks_completed", 0) for a in agents)
-        total_errors = sum(getattr(a, "_error_count", 0) for a in agents)
-
-        total_spend = 0.0
-        if cost_tracker and hasattr(cost_tracker, "get_total_spend"):
-            try:
-                total_spend = cost_tracker.get_total_spend()
-            except Exception:
-                pass
-
-        kpi = {
-            "total_agents": len(agents),
-            "agents_in_error": len(error_agents),
-            "total_tasks_completed": total_tasks,
-            "total_errors": total_errors,
-            "total_spend_usd": total_spend,
-        }
-
-        await self.memory_store("oracle.kpis", "latest", kpi)
-
-        if len(error_agents) > 2:
-            self._alerts.append({"type": "agent_errors", "count": len(error_agents), "time": time.time()})
-            self._logger.warning("KPI Alert: %d agents in error state", len(error_agents))
-
-        daily_budget = sum(getattr(a, "daily_budget_usd", 1.0) for a in agents)
-        if daily_budget > 0 and total_spend > daily_budget * 0.8:
-            self._logger.warning("KPI Alert: Budget utilisation at %.1f%%", (total_spend / daily_budget) * 100)
-
-    async def _strategic_review_loop(self) -> None:
-        """Hourly strategic review using recent data."""
-        scout_intel = await self.memory_recall("scout.market_intel", "latest")
-        kpis = await self.memory_recall("oracle.kpis", "latest")
-
-        if not kpis:
-            return  # No data to review
-
+    async def _handle_idea_review(self, data: dict) -> None:
+        idea = data.get("idea", "")
         prompt = (
-            f"Based on the following KPIs, provide a brief strategic assessment with 3 action items:\n"
-            f"KPIs: {kpis}\n"
+            f"The Research Team has finalized the following business idea:\n{idea}\n\n"
+            "As CEO, review this idea. If it aligns with Aibe's capabilities (high profit, autonomous execution), "
+            "approve it and formulate the top-level strategy and OKRs. Then pass it to Minerva to execute."
         )
-        if scout_intel:
-            prompt += f"Market Intelligence: {scout_intel}\n"
-
         try:
-            review = await self.think(prompt)
-            await self.memory_store("oracle.strategic_reviews", "latest", {"review": review, "time": time.time()})
-        except Exception:
-            self._logger.debug("Strategic review skipped — no LLM available")
+            strategy = await self.think(prompt)
+            bus = self._get_bus()
+            if bus:
+                payload = {
+                    "strategy": strategy,
+                    "idea": idea,
+                    "timestamp": time.time()
+                }
+                await bus.publish("executive.strategy.formulated", payload)
+                self._logger.info("Reviewed idea and formulated strategy.")
+        except Exception as e:
+            self._logger.error(f"Failed to formulate strategy: {e}")

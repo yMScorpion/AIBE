@@ -1,140 +1,123 @@
-# ═══════════════════════════════════════════════════════════════
-# AIBE v2.0 — Model Routing Table
-# Maps task types to primary/fallback model chains with cost rates
-# ═══════════════════════════════════════════════════════════════
-
 task_types:
   simple_classification:
-    description: "Binary/multi-class classification, sentiment, intent detection"
+    description: Binary/multi-class classification, sentiment, intent detection
     primary:
-      model: "google/gemini-2.0-flash-001"
-      cost_per_1k_input: 0.00010
-      cost_per_1k_output: 0.00040
+      model: openrouter/free
+      cost_per_1k_input: 0.0001
+      cost_per_1k_output: 0.0004
     fallback:
-      - model: "google/gemini-2.0-flash-lite-001"
-        cost_per_1k_input: 0.00005
-        cost_per_1k_output: 0.00020
+    - model: openrouter/free
+      cost_per_1k_input: 5.0e-05
+      cost_per_1k_output: 0.0002
     max_tokens: 256
     temperature: 0.0
-
   simple_extraction:
-    description: "Entity extraction, data parsing, structured output from text"
+    description: Entity extraction, data parsing, structured output from text
     primary:
-      model: "google/gemini-2.0-flash-001"
-      cost_per_1k_input: 0.00010
-      cost_per_1k_output: 0.00040
+      model: openrouter/free
+      cost_per_1k_input: 0.0001
+      cost_per_1k_output: 0.0004
     fallback:
-      - model: "google/gemini-2.0-flash-lite-001"
-        cost_per_1k_input: 0.00005
-        cost_per_1k_output: 0.00020
+    - model: openrouter/free
+      cost_per_1k_input: 5.0e-05
+      cost_per_1k_output: 0.0002
     max_tokens: 1024
     temperature: 0.0
-
   standard_generation:
-    description: "Content writing, emails, social posts, marketing copy"
+    description: Content writing, emails, social posts, marketing copy
     primary:
-      model: "anthropic/claude-sonnet-4-20250514"
+      model: openrouter/free
       cost_per_1k_input: 0.003
       cost_per_1k_output: 0.015
     fallback:
-      - model: "google/gemini-2.5-flash-preview"
-        cost_per_1k_input: 0.00015
-        cost_per_1k_output: 0.0035
-      - model: "google/gemini-2.0-flash-001"
-        cost_per_1k_input: 0.00010
-        cost_per_1k_output: 0.00040
+    - model: openrouter/free
+      cost_per_1k_input: 0.00015
+      cost_per_1k_output: 0.0035
+    - model: openrouter/free
+      cost_per_1k_input: 0.0001
+      cost_per_1k_output: 0.0004
     max_tokens: 4096
     temperature: 0.7
-
   standard_reasoning:
-    description: "Analysis, planning, decision-making, strategy"
+    description: Analysis, planning, decision-making, strategy
     primary:
-      model: "anthropic/claude-sonnet-4-20250514"
+      model: openrouter/free
       cost_per_1k_input: 0.003
       cost_per_1k_output: 0.015
     fallback:
-      - model: "google/gemini-2.5-flash-preview"
-        cost_per_1k_input: 0.00015
-        cost_per_1k_output: 0.0035
+    - model: openrouter/free
+      cost_per_1k_input: 0.00015
+      cost_per_1k_output: 0.0035
     max_tokens: 4096
     temperature: 0.3
-
   code_generation:
-    description: "Writing code, refactoring, debugging, code review"
+    description: Writing code, refactoring, debugging, code review
     primary:
-      model: "anthropic/claude-sonnet-4-20250514"
+      model: openrouter/free
       cost_per_1k_input: 0.003
       cost_per_1k_output: 0.015
     fallback:
-      - model: "google/gemini-2.5-pro-preview"
-        cost_per_1k_input: 0.00125
-        cost_per_1k_output: 0.01
-      - model: "google/gemini-2.5-flash-preview"
-        cost_per_1k_input: 0.00015
-        cost_per_1k_output: 0.0035
+    - model: openrouter/free
+      cost_per_1k_input: 0.00125
+      cost_per_1k_output: 0.01
+    - model: openrouter/free
+      cost_per_1k_input: 0.00015
+      cost_per_1k_output: 0.0035
     max_tokens: 8192
     temperature: 0.1
-
   complex_reasoning:
-    description: "Multi-step strategy, business decisions, architecture design"
+    description: Multi-step strategy, business decisions, architecture design
     primary:
-      model: "anthropic/claude-sonnet-4-20250514"
+      model: openrouter/free
       cost_per_1k_input: 0.003
       cost_per_1k_output: 0.015
     fallback:
-      - model: "google/gemini-2.5-pro-preview"
-        cost_per_1k_input: 0.00125
-        cost_per_1k_output: 0.01
+    - model: openrouter/free
+      cost_per_1k_input: 0.00125
+      cost_per_1k_output: 0.01
     max_tokens: 8192
     temperature: 0.2
-
   deep_research:
-    description: "Comprehensive research requiring synthesis of multiple sources"
+    description: Comprehensive research requiring synthesis of multiple sources
     primary:
-      model: "google/gemini-2.5-pro-preview"
+      model: openrouter/free
       cost_per_1k_input: 0.00125
       cost_per_1k_output: 0.01
     fallback:
-      - model: "anthropic/claude-sonnet-4-20250514"
-        cost_per_1k_input: 0.003
-        cost_per_1k_output: 0.015
+    - model: openrouter/free
+      cost_per_1k_input: 0.003
+      cost_per_1k_output: 0.015
     max_tokens: 16384
     temperature: 0.3
-
   security_analysis:
-    description: "Vulnerability analysis, threat assessment, security review"
+    description: Vulnerability analysis, threat assessment, security review
     primary:
-      model: "anthropic/claude-sonnet-4-20250514"
+      model: openrouter/free
       cost_per_1k_input: 0.003
       cost_per_1k_output: 0.015
     fallback:
-      - model: "google/gemini-2.5-pro-preview"
-        cost_per_1k_input: 0.00125
-        cost_per_1k_output: 0.01
+    - model: openrouter/free
+      cost_per_1k_input: 0.00125
+      cost_per_1k_output: 0.01
     max_tokens: 8192
     temperature: 0.0
-
   ml_design:
-    description: "ML architecture selection, experiment design, model evaluation"
+    description: ML architecture selection, experiment design, model evaluation
     primary:
-      model: "google/gemini-2.5-pro-preview"
+      model: openrouter/free
       cost_per_1k_input: 0.00125
       cost_per_1k_output: 0.01
     fallback:
-      - model: "anthropic/claude-sonnet-4-20250514"
-        cost_per_1k_input: 0.003
-        cost_per_1k_output: 0.015
+    - model: openrouter/free
+      cost_per_1k_input: 0.003
+      cost_per_1k_output: 0.015
     max_tokens: 8192
     temperature: 0.2
-
-# Budget enforcement thresholds
 budget:
-  warning_threshold_pct: 80    # Downgrade model tier at this percentage
-  suspend_threshold_pct: 100   # Suspend agent at this percentage
-  downgrade_strategy: "use_fallback"  # Use next fallback model in chain
-
-# Circuit breaker settings
+  warning_threshold_pct: 80
+  suspend_threshold_pct: 100
+  downgrade_strategy: use_fallback
 circuit_breaker:
-  failure_threshold: 5         # Open circuit after N consecutive failures
-  recovery_timeout_seconds: 60 # Try half-open after this duration
-  half_open_max_calls: 2       # Max calls in half-open state before closing
+  failure_threshold: 5
+  recovery_timeout_seconds: 60
+  half_open_max_calls: 2

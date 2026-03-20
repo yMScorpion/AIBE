@@ -185,9 +185,11 @@ services:
 
   frontend:
     build:
-      context: ./aibe/ui/frontend
-      dockerfile: ../../../Dockerfile.frontend
+      context: .
+      dockerfile: Dockerfile.frontend
     restart: unless-stopped
+    environment:
+      BACKEND_INTERNAL_URL: http://api:8000
     ports:
       - "3000:3000"
     depends_on:

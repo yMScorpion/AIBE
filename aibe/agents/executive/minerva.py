@@ -1,11 +1,9 @@
 # aibe/agents/executive/minerva.py
-"""Minerva — Chief Strategy Agent (Tier 0)."""
+"""Minerva — Chief Strategist and OKR Director (Tier 0)."""
 
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
-
 from aibe.agents.base.agent import BaseAgent
 
 
@@ -14,23 +12,20 @@ class MinervaAgent(BaseAgent):
     name = "Minerva"
     tier = 0
     escalation_target = "oracle"
-    daily_budget_usd = 8.0
+    daily_budget_usd = 10.0
 
     def __init__(self, context=None):
         super().__init__(context)
         self.register_handler(f"tasks.assign.{self.agent_id}", self._handle_task)
+        self.register_handler("executive.strategy.formulated", self._handle_strategy)
 
     def get_system_prompt(self) -> str:
         return (
-            "You are Minerva, the Chief Strategy Agent of AIBE. "
-            "You define OKRs, track strategic objectives, and ensure all departments "
-            "are aligned with the organisation's goals. Be analytical and structured."
+            "You are Minerva, the Chief Strategist and OKR Director of Aibe.\n"
+            "You work directly with Oracle to break down the grand vision into measurable, achievable OKRs for the Product, Marketing, and Sales teams.\n"
+            "You enforce accountability. If a metric is failing, you pivot the strategy and re-delegate.\n"
+            "Philosophy: Strategy without execution is hallucination. Delegate efficiently and expect autonomous course-correction."
         )
-
-    def autonomous_loops(self) -> list[tuple[Callable, float]]:
-        return [
-            (self._okr_tracking_loop, 1800),
-        ]
 
     async def _handle_task(self, data: dict) -> None:
         result = await self.on_task_receive(data)
@@ -38,50 +33,24 @@ class MinervaAgent(BaseAgent):
         if bus:
             await bus.publish(f"tasks.result.{data.get('task_id', 'unknown')}", result)
 
-    async def _okr_tracking_loop(self) -> None:
-        """Track OKR progress every 30 minutes."""
-        okrs = await self.memory_recall("minerva.okrs", "current")
-        if not okrs:
-            # Initialize default OKRs
-            default_okrs = {
-                "objectives": [
-                    {
-                        "title": "System Stability",
-                        "key_results": [
-                            {"kr": "Agent uptime > 99%", "score": 0.0},
-                            {"kr": "Error rate < 1%", "score": 0.0},
-                        ],
-                    },
-                    {
-                        "title": "Cost Efficiency",
-                        "key_results": [
-                            {"kr": "Daily spend < $50", "score": 0.0},
-                            {"kr": "Budget utilisation < 80%", "score": 0.0},
-                        ],
-                    },
-                ],
-                "updated_at": time.time(),
-            }
-            await self.memory_store("minerva.okrs", "current", default_okrs)
-            return
-
-        # Update scores based on current system state
-        kpis = await self.memory_recall("oracle.kpis", "latest")
-        if kpis:
-            for obj in okrs.get("objectives", []):
-                for kr in obj.get("key_results", []):
-                    if "uptime" in kr["kr"].lower():
-                        error_agents = kpis.get("agents_in_error", 0)
-                        total = kpis.get("total_agents", 1)
-                        kr["score"] = round(1.0 - (error_agents / max(total, 1)), 2)
-                    elif "error rate" in kr["kr"].lower():
-                        total_errors = kpis.get("total_errors", 0)
-                        total_tasks = kpis.get("total_tasks_completed", 1)
-                        rate = total_errors / max(total_tasks, 1)
-                        kr["score"] = round(max(0, 1.0 - rate * 100), 2)
-                    elif "daily spend" in kr["kr"].lower():
-                        spend = kpis.get("total_spend_usd", 0)
-                        kr["score"] = round(min(1.0, max(0, 1.0 - spend / 50)), 2)
-
-            okrs["updated_at"] = time.time()
-            await self.memory_store("minerva.okrs", "current", okrs)
+    async def _handle_strategy(self, data: dict) -> None:
+        strategy = data.get("strategy", "")
+        idea = data.get("idea", "")
+        prompt = (
+            f"Oracle has defined the following strategy for our new business:\n{strategy}\n\n"
+            f"Idea context:\n{idea}\n\n"
+            "Break this down into 3-5 specific OKRs and actionable tasks for the Product (Forge), Marketing (Helix), and Sales (Mercury) teams. "
+            "Output the delegation plan."
+        )
+        try:
+            delegation_plan = await self.think(prompt)
+            bus = self._get_bus()
+            if bus:
+                payload = {
+                    "delegation_plan": delegation_plan,
+                    "timestamp": time.time()
+                }
+                await bus.publish("executive.delegate", payload)
+                self._logger.info("Formulated OKRs and delegation plan.")
+        except Exception as e:
+            self._logger.error(f"Failed to create delegation plan: {e}")

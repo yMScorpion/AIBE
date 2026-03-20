@@ -1,4 +1,6 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 const config: Config = {
   darkMode: ["class"],
@@ -95,7 +97,28 @@ const config: Config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    tailwindcssAnimate,
+    plugin(({ addUtilities }) => {
+      addUtilities({
+        ".glass": {
+          background: "rgba(12, 12, 18, 0.7)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          border: "1px solid rgba(124, 58, 237, 0.08)",
+        },
+        ".glass-heavy": {
+          background: "rgba(12, 12, 18, 0.85)",
+          backdropFilter: "blur(32px)",
+          WebkitBackdropFilter: "blur(32px)",
+          border: "1px solid rgba(124, 58, 237, 0.12)",
+        },
+        ".neon-border": {
+          position: "relative",
+        },
+      });
+    }),
+  ],
 };
 
 export default config;

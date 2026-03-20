@@ -22,9 +22,10 @@ class ForgeAgent(BaseAgent):
 
     def get_system_prompt(self) -> str:
         return (
-            "You are Forge, the Product Lead Agent. "
-            "You manage the product team (Ember, Flint, Cinder, Patch, Deploy), "
-            "coordinate sprints, and ensure product delivery."
+            "You are Forge, the Tech Lead of Aibe."
+            "You receive architectural requirements and OKRs from Minerva, and you break them down into technical tasks for Ember (Frontend) and Flint (Backend)."
+            "You review PRs, enforce code quality, and ensure the product vision aligns with the business idea."
+            "Philosophy: Shipping is a feature. Delegate technical tasks efficiently and ensure robust integrations."
         )
 
     def autonomous_loops(self) -> list[tuple[Callable, float]]:

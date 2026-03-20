@@ -145,6 +145,22 @@ async def system_status(orchestrator=Depends(get_orchestrator)):
     )
 
 
+@router.post("/start-agency")
+async def start_agency(orchestrator=Depends(get_orchestrator)):
+    """Force Scout to start researching an idea immediately."""
+    global _system_mode
+    if _system_mode != "running":
+        return {"status": "error", "message": "System must be booted first"}
+    
+    # Get the bus from the orchestrator
+    bus = orchestrator._bus
+    if bus:
+        await bus.publish("agency.start_research", {"timestamp": time.time(), "trigger": "manual"})
+        logger.info("Published agency.start_research event")
+        return {"status": "success", "message": "Agency started researching ideas"}
+    return {"status": "error", "message": "Message bus not available"}
+
+
 @router.post("/maintenance")
 async def enter_maintenance(orchestrator=Depends(get_orchestrator)):
     """Enter maintenance mode."""

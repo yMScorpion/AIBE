@@ -24,6 +24,20 @@
     --input: 240 5% 12%;
     --ring: 262.1 83.3% 57.8%;
     --radius: 0.75rem;
+
+    /* Pixel Agents variables */
+    --pixel-bg: #1e1e1e;
+    --pixel-border: #3c3c3c;
+    --pixel-border-light: #6b6b6b;
+    --pixel-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --vscode-foreground: #cccccc;
+    --pixel-text-dim: #888888;
+    --pixel-close-text: #aaaaaa;
+    --pixel-close-hover: #ffffff;
+    --pixel-status-permission: #eab308;
+    --pixel-status-active: #3b82f6;
+    --pixel-overlay-z: 10;
+    --pixel-overlay-selected-z: 20;
   }
 }
 
@@ -98,5 +112,14 @@
   inset: 0;
   border-radius: 50%;
   background: inherit;
-  animation: status-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+  animation: status-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Pixel Agents specific animations */
+@keyframes pixel-agents-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(0.85); }
+}
+.pixel-agents-pulse {
+  animation: pixel-agents-pulse 1.5s infinite ease-in-out;
 }

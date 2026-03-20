@@ -1,12 +1,35 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
+
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    public statusText: string,
+    public body: unknown,
+  ) {
+    super(`${status} ${statusText}`);
+    this.name = "ApiError";
+  }
+}
 
 async function fetcher<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
+  const url = API_ORIGIN ? `${API_ORIGIN}${path}` : path;
+  const res = await fetch(url, {
     ...init,
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  return res.json();
+  if (!res.ok) {
+    let body: unknown;
+    try {
+      body = await res.json();
+    } catch {
+      body = null;
+    }
+    throw new ApiError(res.status, res.statusText, body);
+  }
+  if (res.status === 204) {
+    return undefined as T;
+  }
+  return res.json() as Promise<T>;
 }
 
 export const api = {
