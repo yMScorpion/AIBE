@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { PageHero, Panel, StatGrid } from "@/components/page-kit";
+import { useMockStream, fluctuateInt } from "@/lib/mock-stream";
 import { TIERS, ALL_AGENTS } from "@/lib/agents-data";
 import { useWsStore } from "@/stores/ws-store";
 import { useAgentStore } from "@/stores/agent-store";
@@ -19,6 +20,7 @@ import {
   BrainCircuit
 } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, Pie, PieChart, Line, LineChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
+import NetworkGraph from "@/components/network-graph";
 
 const performanceDataAll = {
   "24h": [
@@ -56,7 +58,7 @@ const departmentData = [
   { name: "Engineering", value: 22 },
   { name: "Support", value: 10 },
 ];
-const COLORS = ['#7c3aed', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#ef4444'];
+const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--primary))', 'hsl(var(--destructive))'];
 
 const conversionData = [
   { name: 'Mon', views: 4000, clicks: 2400, sales: 1400, conversion: 35 },
@@ -78,10 +80,37 @@ const profitData = [
 ];
 
 
+const autonomyData = [
+  { name: "Fully Autonomous", value: 85 },
+  { name: "Human Assisted", value: 15 },
+];
+
+
+
 type TimeRange = "24h" | "7d" | "30d";
 
 export default function Page() {
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
+  
+  // Dynamic Mocks
+  const dynamicProfitData = useMockStream(profitData, (data) => 
+    data.map(d => ({
+      ...d,
+      revenue: fluctuateInt(d.revenue, 0.05),
+      expenses: fluctuateInt(d.expenses, 0.02),
+      profit: fluctuateInt(d.profit, 0.08)
+    }))
+  , 3000);
+
+  const dynamicConversionData = useMockStream(conversionData, (data) => 
+    data.map(d => ({
+      ...d,
+      views: fluctuateInt(d.views, 0.05),
+      clicks: fluctuateInt(d.clicks, 0.06),
+      sales: fluctuateInt(d.sales, 0.08)
+    }))
+  , 2500);
+
   const events = useWsStore((s) => s.events);
   const agents = useAgentStore((s) => s.agents);
   const spend = useAgentStore((s) => s.spendToday);
@@ -181,6 +210,14 @@ export default function Page() {
         ]}
       />
 
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 xl:grid-cols-12 mb-6">
+        <Panel title="Agent Network Topology" subtitle="Live delegation map" className="xl:col-span-12">
+          <div className="h-[400px] w-full mt-4 bg-black/20 rounded-xl border border-white/5 overflow-hidden">
+            <NetworkGraph />
+          </div>
+        </Panel>
+      </div>
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 xl:grid-cols-12">
         {/* Main Chart Panel */}
         <Panel 
@@ -199,22 +236,22 @@ export default function Page() {
               <AreaChart data={performanceData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorTasks" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
                   </linearGradient>
                   <linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#7c3aed" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="time" stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} />
+                <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
                 />
-                <Area type="monotone" dataKey="tasks" stroke="#06b6d4" strokeWidth={3} fillOpacity={1} fill="url(#colorTasks)" />
-                <Area type="monotone" dataKey="cost" stroke="#7c3aed" strokeWidth={3} fillOpacity={1} fill="url(#colorCost)" />
+                <Area type="monotone" dataKey="tasks" stroke="hsl(var(--accent))" strokeWidth={3} fillOpacity={1} fill="url(#colorTasks)" />
+                <Area type="monotone" dataKey="cost" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorCost)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -225,8 +262,8 @@ export default function Page() {
           <div className="flex flex-col gap-6 mt-4">
             <div className="relative flex items-center justify-center p-4">
               <svg className="w-32 h-16" viewBox="0 0 100 50">
-                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#27272a" strokeWidth="12" strokeLinecap="round" />
-                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#10b981" strokeWidth="12" strokeLinecap="round" strokeDasharray="125" strokeDashoffset="20" className="transition-all duration-1000" />
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="hsl(var(--border))" strokeWidth="12" strokeLinecap="round" />
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="hsl(var(--chart-1))" strokeWidth="12" strokeLinecap="round" strokeDasharray="125" strokeDashoffset="20" className="transition-all duration-1000" />
               </svg>
               <div className="absolute bottom-0 flex flex-col items-center">
                 <span className="text-3xl font-bold text-white">92</span>
@@ -257,11 +294,11 @@ export default function Page() {
                   ]}>
                     <defs>
                       <linearGradient id="colorErrors" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <Area type="monotone" dataKey="errors" stroke="#ef4444" fillOpacity={1} fill="url(#colorErrors)" />
+                    <Area type="monotone" dataKey="errors" stroke="hsl(var(--destructive))" fillOpacity={1} fill="url(#colorErrors)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -342,20 +379,20 @@ export default function Page() {
         <Panel title="Revenue & Profit" subtitle="Financial tracking across all operations" className="xl:col-span-8">
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={profitData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="month" stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`} />
+              <LineChart data={dynamicProfitData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(value: any) => [`$${value.toLocaleString()}`, undefined]}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Line type="monotone" dataKey="revenue" name="Revenue" stroke="#10b981" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="expenses" name="Expenses" stroke="#ef4444" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="profit" name="Net Profit" stroke="#06b6d4" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 8 }} />
+                <Line type="monotone" dataKey="revenue" name="Revenue" stroke="hsl(var(--chart-1))" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="expenses" name="Expenses" stroke="hsl(var(--destructive))" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="profit" name="Net Profit" stroke="hsl(var(--accent))" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 8 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -381,8 +418,36 @@ export default function Page() {
                   ))}
                 </Pie>
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        {/* Autonomy Index */}
+        <Panel title="Autonomy Index" subtitle="Fully Autonomous vs Human Assisted" className="xl:col-span-4">
+          <div className="h-[300px] w-full mt-4 flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={autonomyData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={90}
+                  paddingAngle={5}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  <Cell fill="hsl(var(--primary))" />
+                  <Cell fill="hsl(var(--muted-foreground))" />
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
               </PieChart>
@@ -391,22 +456,22 @@ export default function Page() {
         </Panel>
 
         {/* Conversion Funnel */}
-        <Panel title="Conversion Metrics" subtitle="Weekly sales pipeline performance" className="xl:col-span-6">
+        <Panel title="Value Generation Funnel" subtitle="Ideas to Revenue" className="xl:col-span-8">
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={conversionData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="name" stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} />
+              <BarChart data={dynamicConversionData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
-                  cursor={{ fill: '#27272a', opacity: 0.4 }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
+                  cursor={{ fill: 'hsl(var(--border))', opacity: 0.4 }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="views" name="Views" fill="#7c3aed" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                <Bar dataKey="clicks" name="Clicks" fill="#06b6d4" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                <Bar dataKey="sales" name="Sales" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar dataKey="views" name="Views" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar dataKey="clicks" name="Clicks" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar dataKey="sales" name="Sales" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} maxBarSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </div>

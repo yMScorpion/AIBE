@@ -36,11 +36,11 @@ const sentimentData = [
 ];
 
 const scatterIdeasData = [
-  { name: "AI CRM", feasibility: 80, sentiment: 90, z: 200, fill: "#10b981" },
-  { name: "Web3 Identity", feasibility: 40, sentiment: 60, z: 150, fill: "#f59e0b" },
-  { name: "DevOps Tool", feasibility: 90, sentiment: 75, z: 250, fill: "#06b6d4" },
-  { name: "VR Meeting", feasibility: 30, sentiment: 40, z: 100, fill: "#ef4444" },
-  { name: "NoCode App", feasibility: 70, sentiment: 85, z: 180, fill: "#7c3aed" },
+  { name: "AI CRM", feasibility: 80, sentiment: 90, z: 200, fill: "hsl(var(--chart-1))" },
+  { name: "Web3 Identity", feasibility: 40, sentiment: 60, z: 150, fill: "hsl(var(--chart-2))" },
+  { name: "DevOps Tool", feasibility: 90, sentiment: 75, z: 250, fill: "hsl(var(--accent))" },
+  { name: "VR Meeting", feasibility: 30, sentiment: 40, z: 100, fill: "hsl(var(--destructive))" },
+  { name: "NoCode App", feasibility: 70, sentiment: 85, z: 180, fill: "hsl(var(--primary))" },
 ];
 
 const scrapingVolumeData = [
@@ -92,25 +92,25 @@ export default function ResearchPage() {
               <AreaChart data={throughputData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorIdeas" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#7c3aed" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                   </linearGradient>
                   <linearGradient id="colorDebates" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="day" stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Area type="monotone" dataKey="ideas" name="Ideas" stroke="#7c3aed" strokeWidth={2} fillOpacity={1} fill="url(#colorIdeas)" />
-                <Area type="monotone" dataKey="debates" name="Debates" stroke="#06b6d4" strokeWidth={2} fillOpacity={1} fill="url(#colorDebates)" />
-                <Area type="monotone" dataKey="approved" name="Approved" stroke="#10b981" strokeWidth={2} fillOpacity={0.1} fill="#10b981" />
+                <Area type="monotone" dataKey="ideas" name="Ideas" stroke="hsl(var(--primary))" strokeWidth={2} fillOpacity={1} fill="url(#colorIdeas)" />
+                <Area type="monotone" dataKey="debates" name="Debates" stroke="hsl(var(--accent))" strokeWidth={2} fillOpacity={1} fill="url(#colorDebates)" />
+                <Area type="monotone" dataKey="approved" name="Approved" stroke="hsl(var(--chart-1))" strokeWidth={2} fillOpacity={0.1} fill="hsl(var(--chart-1))" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -121,17 +121,17 @@ export default function ResearchPage() {
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                <XAxis type="number" dataKey="feasibility" name="Feasibility" stroke="#52525b" fontSize={10} domain={[0, 100]} />
-                <YAxis type="number" dataKey="sentiment" name="Sentiment" stroke="#52525b" fontSize={10} domain={[0, 100]} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis type="number" dataKey="feasibility" name="Feasibility" stroke="hsl(var(--muted-foreground))" fontSize={10} domain={[0, 100]} />
+                <YAxis type="number" dataKey="sentiment" name="Sentiment" stroke="hsl(var(--muted-foreground))" fontSize={10} domain={[0, 100]} />
                 <ZAxis type="number" dataKey="z" range={[50, 400]} name="Score" />
                 <Tooltip cursor={{ strokeDasharray: '3 3' }} 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(value: any, name: any) => [value, name === 'z' ? 'Score' : name]}
                 />
-                <ReferenceLine x={50} stroke="#52525b" strokeOpacity={0.5} />
-                <ReferenceLine y={50} stroke="#52525b" strokeOpacity={0.5} />
+                <ReferenceLine x={50} stroke="hsl(var(--muted-foreground))" strokeOpacity={0.5} />
+                <ReferenceLine y={50} stroke="hsl(var(--muted-foreground))" strokeOpacity={0.5} />
                 <Scatter name="Ideas" data={scatterIdeasData}>
                   {scatterIdeasData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -149,13 +149,13 @@ export default function ResearchPage() {
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="80%" data={sentimentData}>
-                <PolarGrid stroke="#27272a" />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#a1a1aa', fontSize: 12 }} />
+                <PolarGrid stroke="hsl(var(--border))" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
                 <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
-                <Radar name="Current Trends" dataKey="A" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
-                <Radar name="Past Trends" dataKey="B" stroke="#52525b" fill="#52525b" fillOpacity={0.3} />
+                <Radar name="Current Trends" dataKey="A" stroke="hsl(var(--chart-1))" fill="hsl(var(--chart-1))" fillOpacity={0.3} />
+                <Radar name="Past Trends" dataKey="B" stroke="hsl(var(--muted-foreground))" fill="hsl(var(--muted-foreground))" fillOpacity={0.3} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
                 />
               </RadarChart>
             </ResponsiveContainer>
@@ -167,13 +167,13 @@ export default function ResearchPage() {
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={scrapingVolumeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="hour" stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="hour" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
                 />
-                <Line type="monotone" dataKey="volume" stroke="#06b6d4" strokeWidth={3} dot={{ fill: '#06b6d4', strokeWidth: 2, r: 4 }} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="volume" stroke="hsl(var(--accent))" strokeWidth={3} dot={{ fill: 'hsl(var(--accent))', strokeWidth: 2, r: 4 }} activeDot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -186,8 +186,8 @@ export default function ResearchPage() {
             <div className="flex flex-col items-center justify-center flex-1 w-full">
               <div className="relative flex items-center justify-center">
                 <svg className="w-40 h-20" viewBox="0 0 100 50">
-                  <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#27272a" strokeWidth="12" strokeLinecap="round" />
-                  <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#10b981" strokeWidth="12" strokeLinecap="round" strokeDasharray="125" strokeDashoffset="40" className="transition-all duration-1000" />
+                  <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="hsl(var(--border))" strokeWidth="12" strokeLinecap="round" />
+                  <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="hsl(var(--chart-1))" strokeWidth="12" strokeLinecap="round" strokeDasharray="125" strokeDashoffset="40" className="transition-all duration-1000" />
                 </svg>
                 <div className="absolute bottom-0 flex flex-col items-center">
                   <span className="text-2xl font-bold text-white">78</span>

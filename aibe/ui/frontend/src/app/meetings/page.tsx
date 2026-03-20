@@ -19,7 +19,7 @@ const consensusData = [
   { name: "Conditional", value: 25 },
   { name: "Disagreement", value: 10 },
 ];
-const COLORS = ['#10b981', '#f59e0b', '#ef4444'];
+const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--destructive))'];
 
 export default function MeetingsPage() {
   return (
@@ -44,21 +44,21 @@ export default function MeetingsPage() {
               <AreaChart data={meetingActivityData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorMessages" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#7c3aed" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="time" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis yAxisId="left" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis yAxisId="right" orientation="right" stroke="#06b6d4" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--accent))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Area yAxisId="left" type="monotone" dataKey="messages" name="Messages" stroke="#7c3aed" fillOpacity={1} fill="url(#colorMessages)" />
-                <Area yAxisId="right" type="step" dataKey="participants" name="Participants" stroke="#06b6d4" fill="none" />
+                <Area yAxisId="left" type="monotone" dataKey="messages" name="Messages" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorMessages)" />
+                <Area yAxisId="right" type="step" dataKey="participants" name="Participants" stroke="hsl(var(--accent))" fill="none" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -82,8 +82,8 @@ export default function MeetingsPage() {
                   ))}
                 </Pie>
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(value: any) => [`${value}%`, 'Share']}
                 />

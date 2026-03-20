@@ -1,7 +1,8 @@
 "use client";
 
 import { PageHero, Panel, StatGrid } from "@/components/page-kit";
-import { Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend, PieChart, Pie, Cell, ScatterChart, Scatter, ZAxis, ReferenceLine } from "recharts";
+import { useMockStream, fluctuateInt } from "@/lib/mock-stream";
+import { Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend, PieChart, Pie, Cell, ScatterChart, Scatter, ZAxis, ReferenceLine, LineChart, Line } from "recharts";
 import { Target, TrendingUp, Activity, FileText, SplitSquareHorizontal, MessageSquare } from "lucide-react";
 import { useState } from "react";
 
@@ -24,18 +25,18 @@ const trafficData = [
 ];
 
 const funnelData = [
-  { stage: "Impressions", count: 125000, fill: "#7c3aed" },
-  { stage: "Clicks", count: 18400, fill: "#06b6d4" },
-  { stage: "Leads", count: 3200, fill: "#10b981" },
-  { stage: "Conversions", count: 840, fill: "#f59e0b" },
+  { stage: "Impressions", count: 125000, fill: "hsl(var(--primary))" },
+  { stage: "Clicks", count: 18400, fill: "hsl(var(--accent))" },
+  { stage: "Leads", count: 3200, fill: "hsl(var(--chart-1))" },
+  { stage: "Conversions", count: 840, fill: "hsl(var(--chart-2))" },
 ];
 
 const roasData = [
-  { platform: "Meta Ads", spend: 5000, return: 15000, z: 200, fill: "#3b82f6" },
-  { platform: "Google Search", spend: 8000, return: 28000, z: 250, fill: "#ef4444" },
-  { platform: "LinkedIn Ads", spend: 3000, return: 6000, z: 100, fill: "#0284c7" },
-  { platform: "TikTok Ads", spend: 2000, return: 8000, z: 150, fill: "#ec4899" },
-  { platform: "Twitter Ads", spend: 1500, return: 2000, z: 80, fill: "#0ea5e9" },
+  { platform: "Meta Ads", spend: 5000, return: 15000, z: 200, fill: "hsl(var(--primary))" },
+  { platform: "Google Search", spend: 8000, return: 28000, z: 250, fill: "hsl(var(--destructive))" },
+  { platform: "LinkedIn Ads", spend: 3000, return: 6000, z: 100, fill: "hsl(var(--chart-4))" },
+  { platform: "TikTok Ads", spend: 2000, return: 8000, z: 150, fill: "hsl(var(--chart-3))" },
+  { platform: "Twitter Ads", spend: 1500, return: 2000, z: 80, fill: "hsl(var(--chart-5))" },
 ];
 
 const budgetData = [
@@ -45,14 +46,46 @@ const budgetData = [
   { name: "TikTok", value: 10 },
   { name: "Other", value: 5 },
 ];
-const budgetCOLORS = ['#ef4444', '#3b82f6', '#0284c7', '#ec4899', '#52525b'];
+const budgetCOLORS = ['hsl(var(--destructive))', 'hsl(var(--primary))', 'hsl(var(--chart-4))', 'hsl(var(--chart-3))', 'hsl(var(--muted-foreground))'];
 
 const abTestData = [
   { variant: "A (Control)", conversions: 4.2, bounce: 45 },
   { variant: "B (AI Copy)", conversions: 6.8, bounce: 32 },
 ];
 
+const cacData = [
+  { month: 'Jan', cac: 125 },
+  { month: 'Feb', cac: 118 },
+  { month: 'Mar', cac: 105 },
+  { month: 'Apr', cac: 98 },
+  { month: 'May', cac: 92 },
+  { month: 'Jun', cac: 85 },
+];
+
+const campaignTimeline = [
+  { id: 1, name: "Summer Sale", start: 10, duration: 20, fill: "hsl(var(--primary))" },
+  { id: 2, name: "B2B Outreach", start: 0, duration: 15, fill: "hsl(var(--chart-1))" },
+  { id: 3, name: "Brand Awareness", start: 15, duration: 30, fill: "hsl(var(--chart-2))" },
+  { id: 4, name: "Retargeting", start: 5, duration: 25, fill: "hsl(var(--chart-3))" },
+];
+
 export default function MarketingPage() {
+  const dynamicFunnelData = useMockStream(funnelData, (data) => 
+    data.map(d => ({ ...d, count: fluctuateInt(d.count, 0.03) }))
+  , 3000);
+
+  const dynamicRoasData = useMockStream(roasData, (data) => 
+    data.map(d => ({ ...d, return: fluctuateInt(d.return, 0.05), spend: fluctuateInt(d.spend, 0.01) }))
+  , 4000);
+
+  const dynamicTrafficData = useMockStream(trafficData, (data) => 
+    data.map(d => ({ ...d, organic: fluctuateInt(d.organic, 0.04), paid: fluctuateInt(d.paid, 0.06) }))
+  , 2000);
+
+  const dynamicCacData = useMockStream(cacData, (data) => 
+    data.map(d => ({ ...d, cac: fluctuateInt(d.cac, 0.02) }))
+  , 4000);
+
   const [kanban, setKanban] = useState([
     { id: 1, title: "Blog: Organic Traffic SEO", status: "To Do", assignee: "Marketing", type: "Blog" },
     { id: 2, title: "TikTok: Viral Challenge", status: "In Progress", assignee: "Social Team", type: "Video" },
@@ -81,16 +114,16 @@ export default function MarketingPage() {
         <Panel title="Prism Conversion Funnel" subtitle="Impressions to Conversions" className="xl:col-span-6">
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={funnelData} layout="vertical" margin={{ top: 10, right: 30, left: 40, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
-                <XAxis type="number" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis dataKey="stage" type="category" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+              <BarChart data={dynamicFunnelData} layout="vertical" margin={{ top: 10, right: 30, left: 40, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis dataKey="stage" type="category" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  cursor={{ fill: '#27272a', opacity: 0.4 }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  cursor={{ fill: 'hsl(var(--border))', opacity: 0.4 }}
                 />
                 <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                  {funnelData.map((entry, index) => (
+                  {dynamicFunnelData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
                 </Bar>
@@ -104,19 +137,19 @@ export default function MarketingPage() {
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                <XAxis type="number" dataKey="spend" name="Spend ($)" stroke="#52525b" fontSize={10} tickFormatter={(val) => `$${val/1000}k`} />
-                <YAxis type="number" dataKey="return" name="Return ($)" stroke="#52525b" fontSize={10} tickFormatter={(val) => `$${val/1000}k`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis type="number" dataKey="spend" name="Spend ($)" stroke="hsl(var(--muted-foreground))" fontSize={10} tickFormatter={(val) => `$${val/1000}k`} />
+                <YAxis type="number" dataKey="return" name="Return ($)" stroke="hsl(var(--muted-foreground))" fontSize={10} tickFormatter={(val) => `$${val/1000}k`} />
                 <ZAxis type="number" dataKey="z" range={[50, 400]} name="Volume" />
                 <Tooltip cursor={{ strokeDasharray: '3 3' }} 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(value: any, name: any) => [value, name === 'z' ? 'Volume' : name]}
                 />
-                <ReferenceLine x={4000} stroke="#52525b" strokeOpacity={0.5} />
-                <ReferenceLine y={10000} stroke="#52525b" strokeOpacity={0.5} />
-                <Scatter name="Platforms" data={roasData}>
-                  {roasData.map((entry, index) => (
+                <ReferenceLine x={4000} stroke="hsl(var(--muted-foreground))" strokeOpacity={0.5} />
+                <ReferenceLine y={10000} stroke="hsl(var(--muted-foreground))" strokeOpacity={0.5} />
+                <Scatter name="Platforms" data={dynamicRoasData}>
+                  {dynamicRoasData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
                 </Scatter>
@@ -139,7 +172,7 @@ export default function MarketingPage() {
                 <div className="w-full h-3 bg-white/5 rounded-full overflow-hidden">
                   <div 
                     className={`h-full rounded-full ${i === 1 ? 'bg-emerald-500' : 'bg-52525b'}`}
-                    style={{ width: `${variant.conversions * 10}%`, backgroundColor: i === 1 ? '#10b981' : '#52525b' }}
+                    style={{ width: `${variant.conversions * 10}%`, backgroundColor: i === 1 ? 'hsl(var(--chart-1))' : 'hsl(var(--muted-foreground))' }}
                   />
                 </div>
                 <p className="text-xs text-muted-foreground text-right">Bounce Rate: {variant.bounce}%</p>
@@ -174,8 +207,8 @@ export default function MarketingPage() {
                   ))}
                 </Pie>
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(value: any) => [`${value}%`, 'Share']}
                 />
@@ -223,17 +256,17 @@ export default function MarketingPage() {
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={campaignData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="name" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
-                  cursor={{ fill: '#27272a', opacity: 0.4 }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
+                  cursor={{ fill: 'hsl(var(--border))', opacity: 0.4 }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="spend" name="Spend ($)" fill="#7c3aed" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="conversion" name="Conversions" fill="#06b6d4" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="spend" name="Spend ($)" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="conversion" name="Conversions" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -242,27 +275,27 @@ export default function MarketingPage() {
         <Panel title="Traffic Evolution" subtitle="Crescimento de tráfego orgânico vs pago">
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trafficData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+              <AreaChart data={dynamicTrafficData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorOrganic" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0}/>
                   </linearGradient>
                   <linearGradient id="colorPaid" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="day" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Area type="monotone" dataKey="organic" name="Organic" stroke="#10b981" fillOpacity={1} fill="url(#colorOrganic)" />
-                <Area type="monotone" dataKey="paid" name="Paid" stroke="#f59e0b" fillOpacity={1} fill="url(#colorPaid)" />
+                <Area type="monotone" dataKey="organic" name="Organic" stroke="hsl(var(--chart-1))" fillOpacity={1} fill="url(#colorOrganic)" />
+                <Area type="monotone" dataKey="paid" name="Paid" stroke="hsl(var(--chart-2))" fillOpacity={1} fill="url(#colorPaid)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -309,6 +342,48 @@ export default function MarketingPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </Panel>
+      </section>
+
+      <section className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+        {/* CAC Trend */}
+        <Panel title="CAC Trend" subtitle="Customer Acquisition Cost (Volt)">
+          <div className="h-[300px] w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={dynamicCacData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                />
+                <Line type="monotone" dataKey="cac" name="CAC ($)" stroke="hsl(var(--chart-1))" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        {/* Campaign Timeline (Gantt) */}
+        <Panel title="Campaign Timeline" subtitle="Helix Orchestration">
+          <div className="h-[300px] w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={campaignTimeline} layout="vertical" margin={{ top: 10, right: 0, left: 40, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis dataKey="name" type="category" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  cursor={{ fill: 'hsl(var(--border))', opacity: 0.4 }}
+                />
+                <Bar dataKey="start" stackId="a" fill="transparent" />
+                <Bar dataKey="duration" stackId="a" radius={[0, 4, 4, 0]}>
+                  {campaignTimeline.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </Panel>
       </section>

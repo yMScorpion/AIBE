@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, AlertCircle } from "lucide-react";
+import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
+import React from "react";
 
 export function PageHero({
   eyebrow,
@@ -78,7 +80,11 @@ export function Panel({
         </div>
         {action && <div>{action}</div>}
       </div>
-      <div className="flex-1">{children}</div>
+      <div className="flex-1">
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
+      </div>
     </section>
   );
 }
@@ -110,5 +116,36 @@ export function StatGrid({
         </article>
       ))}
     </div>
+  );
+}
+
+export function SkeletonLoader({ height = "300px", className = "" }: { height?: string, className?: string }) {
+  return (
+    <div className={`w-full bg-white/5 animate-pulse rounded-xl ${className}`} style={{ height }} />
+  );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ErrorFallback({ error, resetErrorBoundary }: { error: any; resetErrorBoundary: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full min-h-[200px] bg-rose-500/10 border border-rose-500/20 rounded-xl p-6 text-center">
+      <AlertCircle className="text-rose-400 mb-2" size={24} />
+      <h3 className="text-sm font-semibold text-rose-400 mb-1">Widget Render Error</h3>
+      <p className="text-xs text-rose-400/80 mb-4 max-w-[250px] truncate">{error.message}</p>
+      <button 
+        onClick={resetErrorBoundary}
+        className="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 text-xs rounded-lg transition-colors"
+      >
+        Try Again
+      </button>
+    </div>
+  );
+}
+
+export function ErrorBoundary({ children }: { children: React.ReactNode }) {
+  return (
+    <ReactErrorBoundary FallbackComponent={ErrorFallback}>
+      {children}
+    </ReactErrorBoundary>
   );
 }

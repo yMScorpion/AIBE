@@ -33,10 +33,10 @@ const tokenUsageData = [
 ];
 
 const efficiencyData = [
-  { model: "GPT-4", complexity: 90, cost: 0.03, z: 200, fill: "#7c3aed" },
-  { model: "Claude 3.5", complexity: 85, cost: 0.015, z: 150, fill: "#0ea5e9" },
-  { model: "Llama 3", complexity: 75, cost: 0.005, z: 300, fill: "#10b981" },
-  { model: "Mixtral 8x22B", complexity: 60, cost: 0.002, z: 400, fill: "#f59e0b" },
+  { model: "GPT-4", complexity: 90, cost: 0.03, z: 200, fill: "hsl(var(--primary))" },
+  { model: "Claude 3.5", complexity: 85, cost: 0.015, z: 150, fill: "hsl(var(--chart-5))" },
+  { model: "Llama 3", complexity: 75, cost: 0.005, z: 300, fill: "hsl(var(--chart-1))" },
+  { model: "Mixtral 8x22B", complexity: 60, cost: 0.002, z: 400, fill: "hsl(var(--chart-2))" },
 ];
 
 const burnForecastData = [
@@ -91,21 +91,21 @@ export default function FinancePage() {
                     <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
                   </linearGradient>
                   <linearGradient id="colorOutput" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--chart-5))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--chart-5))" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="day" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `${v/1000000}M`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `${v/1000000}M`} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(val: any, name: any) => [(val/1000000).toFixed(1) + 'M', name]}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
                 <Area type="monotone" dataKey="input" name="Input Tokens" stackId="1" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorInput)" />
-                <Area type="monotone" dataKey="output" name="Output Tokens" stackId="1" stroke="#0ea5e9" fillOpacity={1} fill="url(#colorOutput)" />
+                <Area type="monotone" dataKey="output" name="Output Tokens" stackId="1" stroke="hsl(var(--chart-5))" fillOpacity={1} fill="url(#colorOutput)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -116,8 +116,8 @@ export default function FinancePage() {
           <div className="h-[300px] w-full mt-4 flex flex-col items-center justify-center">
             <div className="relative flex items-center justify-center">
               <svg className="w-48 h-24" viewBox="0 0 100 50">
-                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#27272a" strokeWidth="12" strokeLinecap="round" />
-                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#10b981" strokeWidth="12" strokeLinecap="round" strokeDasharray="125" strokeDashoffset="5" className="transition-all duration-1000" />
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="hsl(var(--border))" strokeWidth="12" strokeLinecap="round" />
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="hsl(var(--chart-1))" strokeWidth="12" strokeLinecap="round" strokeDasharray="125" strokeDashoffset="5" className="transition-all duration-1000" />
               </svg>
               <div className="absolute bottom-0 flex flex-col items-center">
                 <span className="text-3xl font-bold text-white">98%</span>
@@ -148,16 +148,16 @@ export default function FinancePage() {
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                <XAxis type="number" dataKey="complexity" name="Complexity" stroke="#52525b" fontSize={10} domain={[0, 100]} />
-                <YAxis type="number" dataKey="cost" name="Cost (USD/1k)" stroke="#52525b" fontSize={10} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis type="number" dataKey="complexity" name="Complexity" stroke="hsl(var(--muted-foreground))" fontSize={10} domain={[0, 100]} />
+                <YAxis type="number" dataKey="cost" name="Cost (USD/1k)" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                 <ZAxis type="number" dataKey="z" range={[50, 400]} name="Usage" />
                 <Tooltip cursor={{ strokeDasharray: '3 3' }} 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(value: any, name: any) => [name === 'z' ? `Count: ${value}` : `$${value}`, name === 'z' ? 'Volume' : name]}
                 />
-                <ReferenceLine y={0.01} stroke="#ef4444" strokeOpacity={0.5} strokeDasharray="3 3" label={{ value: 'Cost Limit', fill: '#ef4444', fontSize: 10 }} />
+                <ReferenceLine y={0.01} stroke="hsl(var(--destructive))" strokeOpacity={0.5} strokeDasharray="3 3" label={{ value: 'Cost Limit', fill: 'hsl(var(--destructive))', fontSize: 10 }} />
                 <Scatter name="Models" data={efficiencyData}>
                   {efficiencyData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -173,15 +173,15 @@ export default function FinancePage() {
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={burnForecastData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="date" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Line type="monotone" dataKey="actual" name="Actual Spend" stroke="#ef4444" strokeWidth={3} dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }} />
-                <Line type="monotone" dataKey="forecast" name="Forecast" stroke="#52525b" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                <Line type="monotone" dataKey="actual" name="Actual Spend" stroke="hsl(var(--destructive))" strokeWidth={3} dot={{ fill: 'hsl(var(--destructive))', strokeWidth: 2, r: 4 }} />
+                <Line type="monotone" dataKey="forecast" name="Forecast" stroke="hsl(var(--muted-foreground))" strokeWidth={2} strokeDasharray="5 5" dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -257,24 +257,24 @@ export default function FinancePage() {
               <AreaChart data={revenueData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0}/>
                   </linearGradient>
                   <linearGradient id="colorExp" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="month" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Area type="monotone" dataKey="revenue" name="Revenue ($)" stroke="#10b981" fillOpacity={1} fill="url(#colorRev)" />
-                <Area type="monotone" dataKey="expenses" name="Expenses ($)" stroke="#ef4444" fillOpacity={1} fill="url(#colorExp)" />
+                <Area type="monotone" dataKey="revenue" name="Revenue ($)" stroke="hsl(var(--chart-1))" fillOpacity={1} fill="url(#colorRev)" />
+                <Area type="monotone" dataKey="expenses" name="Expenses ($)" stroke="hsl(var(--destructive))" fillOpacity={1} fill="url(#colorExp)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -284,13 +284,13 @@ export default function FinancePage() {
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={costDistribution} layout="vertical" margin={{ top: 10, right: 20, left: 20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
-                <XAxis type="number" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis dataKey="category" type="category" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis dataKey="category" type="category" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
-                  cursor={{ fill: '#27272a', opacity: 0.4 }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
+                  cursor={{ fill: 'hsl(var(--border))', opacity: 0.4 }}
                 />
                 <Bar dataKey="cost" name="Cost ($)" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
               </BarChart>

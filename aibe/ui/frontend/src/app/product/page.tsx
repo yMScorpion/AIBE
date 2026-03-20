@@ -24,7 +24,7 @@ const prSuccessData = [
   { name: "Rejected", value: 5 },
 ];
 
-const prCOLORS = ['#10b981', '#f59e0b', '#ef4444'];
+const prCOLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--destructive))'];
 
 const latencyData = [
   { time: "10:00", p95: 120, p99: 250 },
@@ -75,19 +75,19 @@ export default function ProductPage() {
               <AreaChart data={burndownData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="day" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Area type="monotone" dataKey="actual" name="Actual Tasks" stroke="#06b6d4" strokeWidth={2} fillOpacity={1} fill="url(#colorActual)" />
-                <Line type="monotone" dataKey="ideal" name="Ideal Burndown" stroke="#52525b" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                <Area type="monotone" dataKey="actual" name="Actual Tasks" stroke="hsl(var(--accent))" strokeWidth={2} fillOpacity={1} fill="url(#colorActual)" />
+                <Line type="monotone" dataKey="ideal" name="Ideal Burndown" stroke="hsl(var(--muted-foreground))" strokeWidth={2} strokeDasharray="5 5" dot={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -113,8 +113,8 @@ export default function ProductPage() {
                   ))}
                 </Pie>
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(value: any) => [`${value}%`, 'Share']}
                 />
@@ -161,15 +161,15 @@ export default function ProductPage() {
           <div className="h-[200px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={latencyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="time" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Line type="monotone" dataKey="p95" name="p95 (ms)" stroke="#10b981" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="p99" name="p99 (ms)" stroke="#ef4444" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="p95" name="p95 (ms)" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="p99" name="p99 (ms)" stroke="hsl(var(--destructive))" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -183,21 +183,21 @@ export default function ProductPage() {
               <AreaChart data={velocityData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorPrs" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="sprint" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="sprint" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Area type="monotone" dataKey="prs" name="PRs Merged" stroke="#3b82f6" fillOpacity={1} fill="url(#colorPrs)" />
-                <Area type="monotone" dataKey="deploys" name="Deploys" stroke="#10b981" fillOpacity={0} />
-                <Area type="monotone" dataKey="bugs" name="Bugs Found" stroke="#ef4444" fillOpacity={0} />
+                <Area type="monotone" dataKey="prs" name="PRs Merged" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorPrs)" />
+                <Area type="monotone" dataKey="deploys" name="Deploys" stroke="hsl(var(--chart-1))" fillOpacity={0} />
+                <Area type="monotone" dataKey="bugs" name="Bugs Found" stroke="hsl(var(--destructive))" fillOpacity={0} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -207,17 +207,17 @@ export default function ProductPage() {
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={codebaseData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="module" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="module" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
-                  cursor={{ fill: '#27272a', opacity: 0.4 }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
+                  cursor={{ fill: 'hsl(var(--border))', opacity: 0.4 }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="coverage" name="Test Coverage (%)" fill="#10b981" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="complexity" name="Complexity Score" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="coverage" name="Test Coverage (%)" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="complexity" name="Complexity Score" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

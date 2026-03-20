@@ -34,7 +34,7 @@ const canaryData = [
   { name: "V1 (Stable)", value: 85 },
   { name: "V2 (Canary)", value: 15 },
 ];
-const canaryCOLORS = ['#3b82f6', '#10b981'];
+const canaryCOLORS = ['hsl(var(--primary))', 'hsl(var(--chart-1))'];
 
 const modelImpactData = [
   { model: "Churn Pred", value: 125000, cost: 15000 },
@@ -66,16 +66,16 @@ export default function MlPage() {
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={performanceHistory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="epoch" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis yAxisId="left" stroke="#10b981" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis yAxisId="right" orientation="right" stroke="#ef4444" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="epoch" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis yAxisId="left" stroke="hsl(var(--chart-1))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--destructive))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Line yAxisId="left" type="monotone" dataKey="accuracy" name="Accuracy" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                <Line yAxisId="right" type="monotone" dataKey="loss" name="Loss" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                <Line yAxisId="left" type="monotone" dataKey="accuracy" name="Accuracy" stroke="hsl(var(--chart-1))" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                <Line yAxisId="right" type="monotone" dataKey="loss" name="Loss" stroke="hsl(var(--destructive))" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -86,8 +86,8 @@ export default function MlPage() {
           <div className="h-[300px] w-full mt-4 flex flex-col items-center justify-center">
             <div className="relative flex items-center justify-center">
               <svg className="w-48 h-24" viewBox="0 0 100 50">
-                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#27272a" strokeWidth="12" strokeLinecap="round" />
-                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#f59e0b" strokeWidth="12" strokeLinecap="round" strokeDasharray="125" strokeDashoffset="80" className="transition-all duration-1000" />
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="hsl(var(--border))" strokeWidth="12" strokeLinecap="round" />
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="hsl(var(--chart-2))" strokeWidth="12" strokeLinecap="round" strokeDasharray="125" strokeDashoffset="80" className="transition-all duration-1000" />
               </svg>
               <div className="absolute bottom-0 flex flex-col items-center">
                 <span className="text-3xl font-bold text-white">0.14</span>
@@ -113,19 +113,19 @@ export default function MlPage() {
                     <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
                   </linearGradient>
                   <linearGradient id="colorMem" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--chart-5))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--chart-5))" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="time" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
                 <Area type="monotone" dataKey="compute" name="Compute %" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorComp)" />
-                <Area type="monotone" dataKey="memory" name="Memory %" stroke="#0ea5e9" fillOpacity={1} fill="url(#colorMem)" />
+                <Area type="monotone" dataKey="memory" name="Memory %" stroke="hsl(var(--chart-5))" fillOpacity={1} fill="url(#colorMem)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -136,18 +136,18 @@ export default function MlPage() {
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={modelImpactData} layout="vertical" margin={{ top: 10, right: 20, left: 30, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
-                <XAxis type="number" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v/1000}k`} />
-                <YAxis dataKey="model" type="category" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v/1000}k`} />
+                <YAxis dataKey="model" type="category" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  cursor={{ fill: '#27272a', opacity: 0.4 }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  cursor={{ fill: 'hsl(var(--border))', opacity: 0.4 }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(val: any, name: any) => [`$${val.toLocaleString()}`, name]}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="value" name="Value Added ($)" fill="#10b981" radius={[0, 4, 4, 0]} />
-                <Bar dataKey="cost" name="Cost ($)" fill="#ef4444" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="value" name="Value Added ($)" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="cost" name="Cost ($)" fill="hsl(var(--destructive))" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -198,8 +198,8 @@ export default function MlPage() {
                   ))}
                 </Pie>
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(value: any) => [`${value}%`, 'Traffic']}
                 />
@@ -217,24 +217,24 @@ export default function MlPage() {
               <AreaChart data={inferenceLatency} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorAvg" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
                   </linearGradient>
                   <linearGradient id="colorP99" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
                     <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="time" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
                 <Area type="step" dataKey="p99" name="P99 Latency" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorP99)" />
-                <Area type="step" dataKey="latency" name="Avg Latency" stroke="#06b6d4" fillOpacity={1} fill="url(#colorAvg)" />
+                <Area type="step" dataKey="latency" name="Avg Latency" stroke="hsl(var(--accent))" fillOpacity={1} fill="url(#colorAvg)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>

@@ -13,21 +13,21 @@ const pipelineData = [
 ];
 
 const customerHealthData = [
-  { name: "Acme Corp", engagement: 90, risk: 10, mrr: 15000, fill: "#10b981" },
-  { name: "Globex", engagement: 40, risk: 60, mrr: 8000, fill: "#f59e0b" },
-  { name: "Initech", engagement: 20, risk: 85, mrr: 12000, fill: "#ef4444" },
-  { name: "Soylent", engagement: 80, risk: 15, mrr: 5000, fill: "#10b981" },
-  { name: "Massive Dynamic", engagement: 65, risk: 35, mrr: 25000, fill: "#3b82f6" },
-  { name: "Umbrella", engagement: 30, risk: 75, mrr: 18000, fill: "#ef4444" },
+  { name: "Acme Corp", engagement: 90, risk: 10, mrr: 15000, fill: "hsl(var(--chart-1))" },
+  { name: "Globex", engagement: 40, risk: 60, mrr: 8000, fill: "hsl(var(--chart-2))" },
+  { name: "Initech", engagement: 20, risk: 85, mrr: 12000, fill: "hsl(var(--destructive))" },
+  { name: "Soylent", engagement: 80, risk: 15, mrr: 5000, fill: "hsl(var(--chart-1))" },
+  { name: "Massive Dynamic", engagement: 65, risk: 35, mrr: 25000, fill: "hsl(var(--primary))" },
+  { name: "Umbrella", engagement: 30, risk: 75, mrr: 18000, fill: "hsl(var(--destructive))" },
 ];
 
 const waterfallData = [
-  { name: "Starting MRR", uv: 150, pv: 0, fill: "#3b82f6" },
-  { name: "New Biz", uv: 25, pv: 150, fill: "#10b981" },
-  { name: "Expansion", uv: 15, pv: 175, fill: "#10b981" },
-  { name: "Contraction", uv: -5, pv: 190, fill: "#f59e0b" },
-  { name: "Churn", uv: -10, pv: 185, fill: "#ef4444" },
-  { name: "Ending MRR", uv: 175, pv: 0, fill: "#7c3aed" },
+  { name: "Starting MRR", uv: 150, pv: 0, fill: "hsl(var(--primary))" },
+  { name: "New Biz", uv: 25, pv: 150, fill: "hsl(var(--chart-1))" },
+  { name: "Expansion", uv: 15, pv: 175, fill: "hsl(var(--chart-1))" },
+  { name: "Contraction", uv: -5, pv: 190, fill: "hsl(var(--chart-2))" },
+  { name: "Churn", uv: -10, pv: 185, fill: "hsl(var(--destructive))" },
+  { name: "Ending MRR", uv: 175, pv: 0, fill: "hsl(var(--primary))" },
 ];
 
 const demoPerformanceData = [
@@ -64,17 +64,17 @@ export default function SalesPage() {
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={pipelineData} layout="vertical" margin={{ top: 10, right: 30, left: 40, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
-                <XAxis type="number" stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v/1000}k`} />
-                <YAxis dataKey="stage" type="category" stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} width={80} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v/1000}k`} />
+                <YAxis dataKey="stage" type="category" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} width={80} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
-                  cursor={{ fill: '#27272a', opacity: 0.4 }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
+                  cursor={{ fill: 'hsl(var(--border))', opacity: 0.4 }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(value: any, name: any, props: any) => [`$${(value/1000).toFixed(0)}k (${props.payload.count} deals)`, 'Pipeline']}
                 />
-                <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]}>
+                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
                   {pipelineData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={`rgba(59, 130, 246, ${1 - index * 0.15})`} />
                   ))}
@@ -89,12 +89,12 @@ export default function SalesPage() {
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                <XAxis type="number" dataKey="engagement" name="Engagement" stroke="#52525b" fontSize={10} domain={[0, 100]} />
-                <YAxis type="number" dataKey="risk" name="Churn Risk" stroke="#52525b" fontSize={10} domain={[0, 100]} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis type="number" dataKey="engagement" name="Engagement" stroke="hsl(var(--muted-foreground))" fontSize={10} domain={[0, 100]} />
+                <YAxis type="number" dataKey="risk" name="Churn Risk" stroke="hsl(var(--muted-foreground))" fontSize={10} domain={[0, 100]} />
                 <ZAxis type="number" dataKey="mrr" range={[50, 400]} name="MRR" />
                 <Tooltip cursor={{ strokeDasharray: '3 3' }} 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(value: any, name: any) => [name === 'mrr' ? `$${value}` : `${value}%`, name]}
                 />
@@ -115,11 +115,11 @@ export default function SalesPage() {
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={waterfallData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="name" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}k`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}k`} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(value: any) => [`$${value}k`, 'Value']}
                 />
@@ -139,16 +139,16 @@ export default function SalesPage() {
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={demoPerformanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                <XAxis dataKey="week" stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis yAxisId="left" stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis yAxisId="right" orientation="right" stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="week" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Bar yAxisId="right" dataKey="conversions" name="Conversions" fill="#3b82f6" barSize={20} radius={[4, 4, 0, 0]} />
-                <Line yAxisId="left" type="monotone" dataKey="engagement" name="Engagement Score" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                <Bar yAxisId="right" dataKey="conversions" name="Conversions" fill="hsl(var(--primary))" barSize={20} radius={[4, 4, 0, 0]} />
+                <Line yAxisId="left" type="monotone" dataKey="engagement" name="Engagement Score" stroke="hsl(var(--chart-1))" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -210,8 +210,8 @@ export default function SalesPage() {
           <div className="h-[300px] w-full mt-4 flex flex-col items-center justify-center">
             <div className="relative flex items-center justify-center">
               <svg className="w-56 h-28" viewBox="0 0 100 50">
-                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#27272a" strokeWidth="10" strokeLinecap="round" />
-                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#3b82f6" strokeWidth="10" strokeLinecap="round" strokeDasharray="125" strokeDashoffset="15" className="transition-all duration-1000" />
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="hsl(var(--border))" strokeWidth="10" strokeLinecap="round" />
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="hsl(var(--primary))" strokeWidth="10" strokeLinecap="round" strokeDasharray="125" strokeDashoffset="15" className="transition-all duration-1000" />
               </svg>
               <div className="absolute bottom-0 flex flex-col items-center">
                 <span className="text-4xl font-bold text-white">112%</span>

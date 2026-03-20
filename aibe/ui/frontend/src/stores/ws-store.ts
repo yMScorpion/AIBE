@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { throttle } from "lodash";
 
 export interface WsEvent {
   event: string;
@@ -75,37 +76,48 @@ export const useWsStore = create<WsState>((set) => {
         ws?.send(JSON.stringify({ type: "subscribe", topics: ["*"] }));
       };
 
+      const pendingEvents: WsEvent[] = [];
+      let pendingAgentStatuses: Record<string, string> = {};
+      let hasPendingStatusChanges = false;
+
+      const flushUpdates = throttle(() => {
+        set((s) => {
+          if (pendingEvents.length === 0 && !hasPendingStatusChanges) return s;
+          
+          const newEvents = [...pendingEvents, ...s.events].slice(0, 200);
+          const newStatuses = hasPendingStatusChanges 
+            ? { ...s.agentStatuses, ...pendingAgentStatuses }
+            : s.agentStatuses;
+            
+          // Clear pending
+          pendingEvents.length = 0;
+          pendingAgentStatuses = {};
+          hasPendingStatusChanges = false;
+          
+          return { events: newEvents, agentStatuses: newStatuses };
+        });
+      }, 400, { leading: true, trailing: true });
+
       ws.onmessage = (e) => {
         try {
           const evt: WsEvent = JSON.parse(e.data);
           if (evt.event === "pong") return;
 
-          set((s) => {
-            const events = [evt, ...s.events].slice(0, 200);
-            const agentStatuses = { ...s.agentStatuses };
-            if (evt.event === "agent_status_changed" && evt.data.agent_id) {
-              agentStatuses[evt.data.agent_id as string] = evt.data.new_status as string;
+          pendingEvents.unshift(evt);
+
+          if (evt.event === "agent_status_changed" && evt.data.agent_id) {
+            pendingAgentStatuses[evt.data.agent_id as string] = evt.data.new_status as string;
+            hasPendingStatusChanges = true;
+          }
+          if (evt.event === "system_heartbeat" && evt.data.statuses) {
+            const incoming = evt.data.statuses as Record<string, string>;
+            for (const [id, status] of Object.entries(incoming)) {
+              pendingAgentStatuses[id] = status;
+              hasPendingStatusChanges = true;
             }
-            if (evt.event === "system_heartbeat" && evt.data.statuses) {
-              const incoming = evt.data.statuses as Record<string, string>;
-              let hasChanges = false;
-              const nextStatuses: Record<string, string> = {};
-              for (const [id, status] of Object.entries(incoming)) {
-                nextStatuses[id] = status;
-                if (s.agentStatuses[id] !== status) {
-                  hasChanges = true;
-                }
-              }
-              if (Object.keys(s.agentStatuses).length !== Object.keys(nextStatuses).length) {
-                hasChanges = true;
-              }
-              if (!hasChanges) {
-                return { events };
-              }
-              return { events, agentStatuses: nextStatuses };
-            }
-            return { events, agentStatuses };
-          });
+          }
+          
+          flushUpdates();
         } catch {}
       };
 

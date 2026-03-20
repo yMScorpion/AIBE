@@ -24,6 +24,12 @@
     --input: 240 5% 15%;
     --ring: 262 83% 58%;
     --radius: 1rem;
+    
+    --chart-1: 160 84% 39%; /* emerald-500 */
+    --chart-2: 38 92% 50%;  /* amber-500 */
+    --chart-3: 330 81% 60%; /* pink-500 */
+    --chart-4: 199 89% 48%; /* sky-500 */
+    --chart-5: 199 89% 48%; /* light sky */
 
     /* Pixel Agents variables */
     --pixel-bg: #1e1e1e;

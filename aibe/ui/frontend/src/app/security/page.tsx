@@ -1,7 +1,8 @@
 "use client";
 
 import { PageHero, Panel, StatGrid } from "@/components/page-kit";
-import { ResponsiveContainer, Tooltip, Cell, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie } from "recharts";
+import { useMockStream, fluctuateInt } from "@/lib/mock-stream";
+import { ResponsiveContainer, Tooltip, Cell, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Treemap, LineChart, Line, CartesianGrid, XAxis, YAxis, Legend } from "recharts";
 import { ShieldAlert, Bug, Activity, ShieldCheck, Lock, Unlock } from "lucide-react";
 
 
@@ -16,8 +17,8 @@ const attackVectorData = [
 ];
 
 const falsePositiveData = [
-  { name: 'True Positives', value: 85, fill: '#ef4444' },
-  { name: 'False Positives', value: 15, fill: '#3b82f6' },
+  { name: 'True Positives', value: 85, fill: 'hsl(var(--destructive))' },
+  { name: 'False Positives', value: 15, fill: 'hsl(var(--primary))' },
 ];
 
 const playbookSteps = [
@@ -28,7 +29,60 @@ const playbookSteps = [
   { step: 5, name: "Post-Mortem", status: "pending", time: "--" },
 ];
 
+const treemapData = [
+  {
+    name: "Critical",
+    children: [
+      { name: "SQL Injection", size: 400 },
+      { name: "RCE", size: 300 },
+      { name: "Auth Bypass", size: 200 },
+    ],
+  },
+  {
+    name: "High",
+    children: [
+      { name: "XSS", size: 500 },
+      { name: "CSRF", size: 300 },
+    ],
+  },
+  {
+    name: "Medium",
+    children: [
+      { name: "Information Disclosure", size: 200 },
+      { name: "Misconfiguration", size: 100 },
+    ],
+  },
+];
+
+const mttdMttrData = [
+  { day: "Mon", mttd: 15, mttr: 45 },
+  { day: "Tue", mttd: 12, mttr: 40 },
+  { day: "Wed", mttd: 18, mttr: 50 },
+  { day: "Thu", mttd: 10, mttr: 35 },
+  { day: "Fri", mttd: 8, mttr: 30 },
+  { day: "Sat", mttd: 14, mttr: 42 },
+  { day: "Sun", mttd: 11, mttr: 38 },
+];
+
 export default function SecurityPage() {
+  const dynamicAttackVectorData = useMockStream(attackVectorData, (data) => 
+    data.map(d => ({ ...d, A: fluctuateInt(d.A, 0.05) }))
+  , 2000);
+
+  const dynamicFalsePositiveData = useMockStream(falsePositiveData, (data) => {
+    const total = 100;
+    const falsePos = fluctuateInt(data[1].value, 0.1);
+    const newFalse = Math.max(5, Math.min(30, falsePos));
+    return [
+      { ...data[0], value: total - newFalse },
+      { ...data[1], value: newFalse }
+    ];
+  }, 5000);
+
+  const dynamicMttdMttrData = useMockStream(mttdMttrData, (data) => 
+    data.map(d => ({ ...d, mttd: fluctuateInt(d.mttd, 0.05), mttr: fluctuateInt(d.mttr, 0.05) }))
+  , 3000);
+
   return (
     <main className="mx-auto max-w-[1600px] pb-12">
       <PageHero
@@ -51,8 +105,8 @@ export default function SecurityPage() {
           <div className="h-[300px] w-full mt-4 flex flex-col items-center justify-center">
             <div className="relative flex items-center justify-center">
               <svg className="w-56 h-28" viewBox="0 0 100 50">
-                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#27272a" strokeWidth="10" strokeLinecap="round" />
-                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#10b981" strokeWidth="10" strokeLinecap="round" strokeDasharray="125" strokeDashoffset="20" className="transition-all duration-1000" />
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="hsl(var(--border))" strokeWidth="10" strokeLinecap="round" />
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="hsl(var(--chart-1))" strokeWidth="10" strokeLinecap="round" strokeDasharray="125" strokeDashoffset="20" className="transition-all duration-1000" />
               </svg>
               <div className="absolute bottom-0 flex flex-col items-center">
                 <span className="text-4xl font-bold text-white">84</span>
@@ -69,13 +123,13 @@ export default function SecurityPage() {
         <Panel title="Attack Vector Radar" subtitle="Simulações de quebra (Penetest)" className="xl:col-span-4">
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={attackVectorData}>
-                <PolarGrid stroke="#27272a" />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#a1a1aa', fontSize: 12 }} />
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={dynamicAttackVectorData}>
+                <PolarGrid stroke="hsl(var(--border))" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
                 <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
-                <Radar name="Vectors" dataKey="A" stroke="#ef4444" fill="#ef4444" fillOpacity={0.3} />
+                <Radar name="Vectors" dataKey="A" stroke="hsl(var(--destructive))" fill="hsl(var(--destructive))" fillOpacity={0.3} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
                 />
               </RadarChart>
             </ResponsiveContainer>
@@ -88,7 +142,7 @@ export default function SecurityPage() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={falsePositiveData}
+                  data={dynamicFalsePositiveData}
                   cx="50%"
                   cy="50%"
                   innerRadius={70}
@@ -97,18 +151,18 @@ export default function SecurityPage() {
                   dataKey="value"
                   stroke="none"
                 >
-                  {falsePositiveData.map((entry, index) => (
+                  {dynamicFalsePositiveData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
                 </Pie>
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
                 />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-3xl font-bold text-white">15%</span>
+              <span className="text-3xl font-bold text-white">{dynamicFalsePositiveData[1].value}%</span>
               <span className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">Noise</span>
             </div>
           </div>
@@ -186,6 +240,44 @@ export default function SecurityPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </Panel>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-12 mb-6">
+        {/* Heatmap de Vulnerabilidades (Treemap) */}
+        <Panel title="Vulnerability Heatmap" subtitle="SAST results by Severity" className="xl:col-span-6">
+          <div className="h-[300px] w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <Treemap
+                data={treemapData}
+                dataKey="size"
+                aspectRatio={4 / 3}
+                stroke="hsl(var(--border))"
+                fill="hsl(var(--destructive))"
+              >
+                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }} />
+              </Treemap>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        {/* MTTD / MTTR Trend */}
+        <Panel title="Response Efficiency Trend" subtitle="MTTD vs MTTR" className="xl:col-span-6">
+          <div className="h-[300px] w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={dynamicMttdMttrData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                <Line type="monotone" dataKey="mttd" name="MTTD (mins)" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="mttr" name="MTTR (mins)" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </Panel>
       </div>
