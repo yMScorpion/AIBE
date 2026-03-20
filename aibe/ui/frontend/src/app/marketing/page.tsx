@@ -1,8 +1,8 @@
 "use client";
 
 import { PageHero, Panel, StatGrid } from "@/components/page-kit";
-import { Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
-import { TrendingUp, Users, Target, Activity, MessageSquare } from "lucide-react";
+import { Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend, PieChart, Pie, Cell, ScatterChart, Scatter, ZAxis, ReferenceLine } from "recharts";
+import { Target, TrendingUp, Activity, FileText, SplitSquareHorizontal, MessageSquare } from "lucide-react";
 import { useState } from "react";
 
 const campaignData = [
@@ -23,6 +23,35 @@ const trafficData = [
   { day: "Sun", organic: 160, paid: 120 },
 ];
 
+const funnelData = [
+  { stage: "Impressions", count: 125000, fill: "#7c3aed" },
+  { stage: "Clicks", count: 18400, fill: "#06b6d4" },
+  { stage: "Leads", count: 3200, fill: "#10b981" },
+  { stage: "Conversions", count: 840, fill: "#f59e0b" },
+];
+
+const roasData = [
+  { platform: "Meta Ads", spend: 5000, return: 15000, z: 200, fill: "#3b82f6" },
+  { platform: "Google Search", spend: 8000, return: 28000, z: 250, fill: "#ef4444" },
+  { platform: "LinkedIn Ads", spend: 3000, return: 6000, z: 100, fill: "#0284c7" },
+  { platform: "TikTok Ads", spend: 2000, return: 8000, z: 150, fill: "#ec4899" },
+  { platform: "Twitter Ads", spend: 1500, return: 2000, z: 80, fill: "#0ea5e9" },
+];
+
+const budgetData = [
+  { name: "Google", value: 45 },
+  { name: "Meta", value: 25 },
+  { name: "LinkedIn", value: 15 },
+  { name: "TikTok", value: 10 },
+  { name: "Other", value: 5 },
+];
+const budgetCOLORS = ['#ef4444', '#3b82f6', '#0284c7', '#ec4899', '#52525b'];
+
+const abTestData = [
+  { variant: "A (Control)", conversions: 4.2, bounce: 45 },
+  { variant: "B (AI Copy)", conversions: 6.8, bounce: 32 },
+];
+
 export default function MarketingPage() {
   const [kanban, setKanban] = useState([
     { id: 1, title: "Blog: Organic Traffic SEO", status: "To Do", assignee: "Marketing", type: "Blog" },
@@ -34,19 +63,162 @@ export default function MarketingPage() {
   return (
     <main className="mx-auto max-w-[1680px] pb-8">
       <PageHero
-        eyebrow="Marketing Command"
-        title="Motor de crescimento com execução omnicanal orientada a ROI"
-        subtitle="Campanhas, calendário editorial e SEO analytics com tomada de decisão instantânea."
+        eyebrow="Tier 3 • Marketing Department"
+        title="Growth & Acquisition"
+        subtitle="Campaigns, editorial calendar, and SEO analytics managed by Helix, Quill, Lumen, Volt, and Prism."
       />
       <StatGrid
         stats={[
           { label: "Active Campaigns", value: "18", tone: "good", icon: <Activity size={20} /> },
-          { label: "CTR Avg", value: "6.4%", tone: "good", icon: <Target size={20} /> },
+          { label: "Copy Velocity", value: "12k words", trend: "per day", tone: "good", icon: <FileText size={20} /> },
           { label: "CAC Trend", value: "-9.1%", tone: "good", icon: <TrendingUp size={20} /> },
-          { label: "Organic Lift", value: "+22%", tone: "default", icon: <Users size={20} /> },
+          { label: "Global SEO Score", value: "92/100", tone: "good", icon: <Target size={20} /> },
         ]}
       />
-      <section className="mt-4 grid grid-cols-1 gap-6 xl:grid-cols-2">
+      
+      <section className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
+        {/* Conversion Funnel */}
+        <Panel title="Prism Conversion Funnel" subtitle="Impressions to Conversions" className="xl:col-span-6">
+          <div className="h-[300px] w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={funnelData} layout="vertical" margin={{ top: 10, right: 30, left: 40, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
+                <XAxis type="number" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis dataKey="stage" type="category" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  cursor={{ fill: '#27272a', opacity: 0.4 }}
+                />
+                <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                  {funnelData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        {/* ROAS Matrix */}
+        <Panel title="Volt ROAS Matrix" subtitle="Ad Spend vs Return by Platform" className="xl:col-span-6">
+          <div className="h-[300px] w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+                <XAxis type="number" dataKey="spend" name="Spend ($)" stroke="#52525b" fontSize={10} tickFormatter={(val) => `$${val/1000}k`} />
+                <YAxis type="number" dataKey="return" name="Return ($)" stroke="#52525b" fontSize={10} tickFormatter={(val) => `$${val/1000}k`} />
+                <ZAxis type="number" dataKey="z" range={[50, 400]} name="Volume" />
+                <Tooltip cursor={{ strokeDasharray: '3 3' }} 
+                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={(value: any, name: any) => [value, name === 'z' ? 'Volume' : name]}
+                />
+                <ReferenceLine x={4000} stroke="#52525b" strokeOpacity={0.5} />
+                <ReferenceLine y={10000} stroke="#52525b" strokeOpacity={0.5} />
+                <Scatter name="Platforms" data={roasData}>
+                  {roasData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Scatter>
+              </ScatterChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+      </section>
+
+      <section className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
+        {/* A/B Test Split View */}
+        <Panel title="A/B Test Results" subtitle="Landing Page Conversion Optimization" className="xl:col-span-4">
+          <div className="h-[300px] w-full mt-4 flex flex-col justify-center gap-6">
+            {abTestData.map((variant, i) => (
+              <div key={i} className="flex flex-col gap-2">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-white font-medium">{variant.variant}</span>
+                  <span className={i === 1 ? "text-emerald-400 font-bold" : "text-muted-foreground"}>{variant.conversions}% Conv.</span>
+                </div>
+                <div className="w-full h-3 bg-white/5 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full ${i === 1 ? 'bg-emerald-500' : 'bg-52525b'}`}
+                    style={{ width: `${variant.conversions * 10}%`, backgroundColor: i === 1 ? '#10b981' : '#52525b' }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground text-right">Bounce Rate: {variant.bounce}%</p>
+              </div>
+            ))}
+            <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-start gap-3">
+              <SplitSquareHorizontal className="text-emerald-400 mt-0.5" size={16} />
+              <p className="text-xs text-emerald-400/90 leading-relaxed">
+                Variant B (AI Copy) shows a <strong className="text-emerald-400">61% relative increase</strong> in conversion rate. Deploy agent is preparing rollout.
+              </p>
+            </div>
+          </div>
+        </Panel>
+
+        {/* Ad Budget Distribution */}
+        <Panel title="Ad Budget Distribution" subtitle="Allocation by Platform" className="xl:col-span-4">
+          <div className="h-[300px] w-full mt-4 flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={budgetData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={90}
+                  paddingAngle={5}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {budgetData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={budgetCOLORS[index % budgetCOLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  itemStyle={{ color: '#fff' }}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={(value: any) => [`${value}%`, 'Share']}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        {/* Lumen Asset Engagement Heatmap */}
+        <Panel title="Asset Engagement Heatmap" subtitle="CTR by Visual Style (Lumen)" className="xl:col-span-4">
+          <div className="h-[300px] w-full mt-4 flex flex-col justify-center">
+            <div className="grid grid-cols-4 gap-2">
+              <div className="col-span-1"></div>
+              {['Tech', 'Playful', 'Minimal'].map(d => <div key={d} className="text-center text-xs text-muted-foreground">{d}</div>)}
+              
+              {['Images', 'Videos', 'Carousels', 'Gifs'].map((format, i) => (
+                <div key={format} className="contents">
+                  <div className="text-xs text-muted-foreground flex items-center justify-end pr-2">{format}</div>
+                  {Array.from({length: 3}).map((_, j) => {
+                    const intensity = Math.random();
+                    return (
+                      <div 
+                        key={`${i}-${j}`} 
+                        className="h-10 rounded-md transition-all hover:scale-105 hover:ring-1 hover:ring-white/20 cursor-pointer"
+                        style={{ backgroundColor: `rgba(16, 185, 129, ${intensity * 0.8 + 0.2})` }}
+                        title={`${format} + ${['Tech', 'Playful', 'Minimal'][j]}: ${(intensity * 8 + 1).toFixed(1)}% CTR`}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+              <span>Low CTR</span>
+              <div className="w-24 h-2 bg-gradient-to-r from-emerald-900 to-emerald-400 rounded-full"></div>
+              <span>High CTR</span>
+            </div>
+          </div>
+        </Panel>
+      </section>
+
+      <section className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Panel title="Campaign Matrix" subtitle="Distribuição por canal, custo e performance">
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
@@ -95,39 +267,11 @@ export default function MarketingPage() {
             </ResponsiveContainer>
           </div>
         </Panel>
+      </section>
 
-        <Panel title="SEO Dashboard" subtitle="Evolução de rankings, tráfego e intenção" className="xl:col-span-1">
-          <div className="rounded-xl border border-white/5 bg-black/20 overflow-hidden mt-4">
-            <table className="w-full text-left text-sm text-muted-foreground">
-              <thead className="bg-white/5 text-white/80">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Keyword</th>
-                  <th className="px-4 py-3 font-medium">Position</th>
-                  <th className="px-4 py-3 font-medium">Vol</th>
-                  <th className="px-4 py-3 font-medium">Trend</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {[
-                  { keyword: "ai agents orchestration", pos: 1, vol: "12.5K", intent: "Transactional", trend: "+2" },
-                  { keyword: "autonomous team software", pos: 3, vol: "8.2K", intent: "Informational", trend: "+1" },
-                  { keyword: "llm routing table", pos: 2, vol: "5.1K", intent: "Transactional", trend: "0" },
-                  { keyword: "automated budget limits ai", pos: 5, vol: "3.4K", intent: "Commercial", trend: "+4" },
-                ].map((row, i) => (
-                  <tr key={i} className="hover:bg-white/5 transition-colors">
-                    <td className="px-4 py-3 font-medium text-white">{row.keyword}</td>
-                    <td className="px-4 py-3 text-cyber-cyan">#{row.pos}</td>
-                    <td className="px-4 py-3">{row.vol}</td>
-                    <td className="px-4 py-3 text-emerald-400">{row.trend}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Panel>
-
-        <Panel title="Content Kanban (Marketing & Social)" subtitle="Sincronizado em tempo real com time de Social" className="xl:col-span-2">
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <section className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
+        <Panel title="Content Kanban (Marketing & Social)" subtitle="Sincronizado em tempo real com time de Social" className="xl:col-span-12">
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-6">
             {["To Do", "In Progress", "Done"].map(status => (
               <div key={status} className="rounded-xl border border-white/5 bg-black/20 p-4">
                 <h3 className="text-sm font-semibold text-white/80 mb-3 flex items-center justify-between">
@@ -138,23 +282,23 @@ export default function MarketingPage() {
                 </h3>
                 <div className="space-y-3">
                   {kanban.filter(k => k.status === status).map(item => (
-                    <div key={item.id} className="rounded-lg border border-white/5 bg-white/5 p-3 hover:border-white/10 transition-colors">
+                    <div key={item.id} className="rounded-lg border border-white/5 bg-white/5 p-4 hover:border-white/10 transition-colors">
                       <div className="flex justify-between items-start mb-2">
-                        <span className={`text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded ${item.assignee === 'Social Team' ? 'bg-cyber-purple/20 text-cyber-purple' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                        <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded ${item.assignee === 'Social Team' ? 'bg-cyber-purple/20 text-cyber-purple' : 'bg-emerald-500/20 text-emerald-400'}`}>
                           {item.assignee}
                         </span>
-                        <span className="text-xs text-muted-foreground">{item.type}</span>
+                        <span className="text-xs font-medium text-muted-foreground bg-white/5 px-2 py-1 rounded-md">{item.type}</span>
                       </div>
-                      <p className="text-sm text-white font-medium">{item.title}</p>
-                      <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1"><MessageSquare size={12} /> Sync</span>
+                      <p className="text-sm text-white font-medium mt-3 mb-4">{item.title}</p>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t border-white/5">
+                        <span className="flex items-center gap-1.5"><MessageSquare size={14} /> Sync Active</span>
                         {status !== 'Done' && (
                           <button 
                             onClick={() => {
                               const nextStatus = status === 'To Do' ? 'In Progress' : 'Done';
                               setKanban(kanban.map(k => k.id === item.id ? { ...k, status: nextStatus } : k));
                             }}
-                            className="hover:text-white transition-colors"
+                            className="hover:text-white transition-colors bg-white/5 px-3 py-1.5 rounded-md hover:bg-white/10"
                           >
                             Move →
                           </button>

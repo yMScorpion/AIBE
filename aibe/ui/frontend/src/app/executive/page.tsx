@@ -7,7 +7,7 @@ import {
   AlertTriangle,
   DollarSign
 } from "lucide-react";
-import { Area, AreaChart, Bar, BarChart, Pie, PieChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend, Line } from "recharts";
+import { Area, AreaChart, Bar, BarChart, Pie, PieChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend, Line, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Scatter, ScatterChart, ZAxis, ReferenceLine } from "recharts";
 
 const okrData = [
   { name: "Q1 Launch", progress: 85, target: 100 },
@@ -33,6 +33,29 @@ const expenseAllocation = [
 ];
 
 const COLORS = ['#7c3aed', '#06b6d4', '#10b981', '#f59e0b'];
+
+const radarData = [
+  { subject: 'Innovation', A: 120, B: 110, fullMark: 150 },
+  { subject: 'Market Fit', A: 98, B: 130, fullMark: 150 },
+  { subject: 'Efficiency', A: 86, B: 130, fullMark: 150 },
+  { subject: 'Growth', A: 99, B: 100, fullMark: 150 },
+  { subject: 'Stability', A: 85, B: 90, fullMark: 150 },
+  { subject: 'Speed', A: 65, B: 85, fullMark: 150 },
+];
+
+const eisenhowerData = [
+  { name: 'Core Rewrite', importance: 90, urgency: 85, z: 200, fill: '#ef4444' }, // Do
+  { name: 'New Feature X', importance: 80, urgency: 40, z: 200, fill: '#3b82f6' }, // Schedule
+  { name: 'Bug Fixes', importance: 30, urgency: 95, z: 200, fill: '#f59e0b' }, // Delegate
+  { name: 'UI Tweaks', importance: 20, urgency: 20, z: 200, fill: '#10b981' }, // Eliminate
+];
+
+const funnelData = [
+  { stage: 'Proposals', value: 120 },
+  { stage: 'Reviewed', value: 80 },
+  { stage: 'Approved', value: 30 },
+  { stage: 'Execution', value: 10 },
+];
 
 export default function ExecutivePage() {
   return (
@@ -106,6 +129,79 @@ export default function ExecutivePage() {
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
               </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        {/* Strategic Alignment Radar */}
+        <Panel title="Strategic Alignment Radar" subtitle="Current focus vs Oracle's target" className="xl:col-span-4">
+          <div className="h-[300px] w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                <PolarGrid stroke="#27272a" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#a1a1aa', fontSize: 10 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
+                <Radar name="Target (Oracle)" dataKey="A" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.3} />
+                <Radar name="Actual (Minerva)" dataKey="B" stroke="#7c3aed" fill="#7c3aed" fillOpacity={0.3} />
+                <Legend wrapperStyle={{ fontSize: '10px' }} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        {/* Eisenhower Matrix */}
+        <Panel title="Eisenhower Matrix" subtitle="Automated task prioritization" className="xl:col-span-4">
+          <div className="h-[300px] w-full mt-4 relative">
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+                <XAxis type="number" dataKey="urgency" name="Urgency" stroke="#52525b" fontSize={10} domain={[0, 100]} />
+                <YAxis type="number" dataKey="importance" name="Importance" stroke="#52525b" fontSize={10} domain={[0, 100]} />
+                <ZAxis type="number" dataKey="z" range={[100, 300]} name="Score" />
+                <Tooltip cursor={{ strokeDasharray: '3 3' }} 
+                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={(value: any, name: any, props: any) => [props.payload.name, 'Task']}
+                />
+                <ReferenceLine x={50} stroke="#52525b" strokeOpacity={0.5} />
+                <ReferenceLine y={50} stroke="#52525b" strokeOpacity={0.5} />
+                <Scatter name="Tasks" data={eisenhowerData}>
+                  {eisenhowerData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Scatter>
+              </ScatterChart>
+            </ResponsiveContainer>
+            {/* Labels for quadrants */}
+            <span className="absolute top-2 left-6 text-[10px] text-muted-foreground font-semibold">Important / Not Urgent</span>
+            <span className="absolute top-2 right-6 text-[10px] text-muted-foreground font-semibold">Important / Urgent</span>
+            <span className="absolute bottom-6 left-6 text-[10px] text-muted-foreground font-semibold">Not Imp / Not Urgent</span>
+            <span className="absolute bottom-6 right-6 text-[10px] text-muted-foreground font-semibold">Not Imp / Urgent</span>
+          </div>
+        </Panel>
+
+        {/* Idea Approval Funnel */}
+        <Panel title="Idea Approval Funnel" subtitle="Research to Execution flow" className="xl:col-span-4">
+          <div className="h-[300px] w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={funnelData} layout="vertical" margin={{ top: 10, right: 20, left: 40, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={true} vertical={false} />
+                <XAxis type="number" stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis dataKey="stage" type="category" stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  itemStyle={{ color: '#fff' }}
+                  cursor={{ fill: '#27272a', opacity: 0.4 }}
+                />
+                <Bar dataKey="value" fill="#06b6d4" radius={[0, 4, 4, 0]} barSize={30}>
+                  {funnelData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} fillOpacity={1 - index * 0.15} />
+                  ))}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </Panel>

@@ -1,8 +1,8 @@
 "use client";
 
 import { PageHero, Panel, StatGrid } from "@/components/page-kit";
-import { Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
-import { DollarSign, TrendingUp, AlertTriangle, Briefcase, RefreshCw } from "lucide-react";
+import { Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend, ScatterChart, Scatter, ZAxis, ReferenceLine, LineChart, Line, Cell } from "recharts";
+import { DollarSign, TrendingUp, Briefcase, RefreshCw, ShieldCheck, CheckCircle2, AlertCircle } from "lucide-react";
 import { useState } from "react";
 
 const revenueData = [
@@ -22,6 +22,33 @@ const costDistribution = [
   { category: "Software", cost: 2000 },
 ];
 
+const tokenUsageData = [
+  { day: "Mon", input: 1200000, output: 400000 },
+  { day: "Tue", input: 1500000, output: 500000 },
+  { day: "Wed", input: 1800000, output: 600000 },
+  { day: "Thu", input: 1400000, output: 450000 },
+  { day: "Fri", input: 2200000, output: 800000 },
+  { day: "Sat", input: 900000, output: 300000 },
+  { day: "Sun", input: 800000, output: 250000 },
+];
+
+const efficiencyData = [
+  { model: "GPT-4", complexity: 90, cost: 0.03, z: 200, fill: "#7c3aed" },
+  { model: "Claude 3.5", complexity: 85, cost: 0.015, z: 150, fill: "#0ea5e9" },
+  { model: "Llama 3", complexity: 75, cost: 0.005, z: 300, fill: "#10b981" },
+  { model: "Mixtral 8x22B", complexity: 60, cost: 0.002, z: 400, fill: "#f59e0b" },
+];
+
+const burnForecastData = [
+  { date: "1st", actual: 100, forecast: 100 },
+  { date: "5th", actual: 500, forecast: 500 },
+  { date: "10th", actual: 1200, forecast: 1000 },
+  { date: "15th", actual: 1800, forecast: 1500 },
+  { date: "20th", actual: null, forecast: 2000 },
+  { date: "25th", actual: null, forecast: 2500 },
+  { date: "30th", actual: null, forecast: 3000 },
+];
+
 export default function FinancePage() {
   const currentRevenue = 65000;
   const [marketingBudget, setMarketingBudget] = useState(0);
@@ -39,19 +66,191 @@ export default function FinancePage() {
   return (
     <main className="mx-auto max-w-[1680px] pb-8">
       <PageHero
-        eyebrow="Finance & Ops"
-        title="Controle financeiro em tempo real com foco em margem e eficiência"
-        subtitle="Visão consolidada de P&L, limites de custos e gestão de parceiros operacionais."
+        eyebrow="Tier 5 • Finance & Ops"
+        title="Financial Command Center"
+        subtitle="Compliance, audit, and strict cost tracking managed by Ledger, Atlas, and Procurator."
       />
       <StatGrid
         stats={[
           { label: "MRR", value: "$65k", tone: "good", icon: <DollarSign size={20} /> },
-          { label: "Gross Margin", value: "71%", tone: "good", icon: <TrendingUp size={20} /> },
+          { label: "Operational ROI", value: "3.4x", tone: "good", icon: <TrendingUp size={20} /> },
           { label: "Runway", value: "22 months", tone: "default", icon: <Briefcase size={20} /> },
-          { label: "Budget Variance", value: "+2.4%", tone: "warn", icon: <AlertTriangle size={20} /> },
+          { label: "Compliance Score", value: "98%", tone: "good", icon: <ShieldCheck size={20} /> },
         ]}
       />
-      <section className="mt-4 grid grid-cols-1 gap-6 xl:grid-cols-2">
+      
+      <section className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
+        {/* Token Usage Stack */}
+        <Panel title="Ledger Token Usage" subtitle="Daily Input vs Output tokens (Millions)" className="xl:col-span-8">
+          <div className="h-[300px] w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={tokenUsageData} margin={{ top: 10, right: 0, left: 10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorInput" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorOutput" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                <XAxis dataKey="day" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `${v/1000000}M`} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={(val: any, name: any) => [(val/1000000).toFixed(1) + 'M', name]}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                <Area type="monotone" dataKey="input" name="Input Tokens" stackId="1" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorInput)" />
+                <Area type="monotone" dataKey="output" name="Output Tokens" stackId="1" stroke="#0ea5e9" fillOpacity={1} fill="url(#colorOutput)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        {/* Compliance Gauge */}
+        <Panel title="Atlas Compliance Score" subtitle="LGPD, SOC2 & Security Adherence" className="xl:col-span-4">
+          <div className="h-[300px] w-full mt-4 flex flex-col items-center justify-center">
+            <div className="relative flex items-center justify-center">
+              <svg className="w-48 h-24" viewBox="0 0 100 50">
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#27272a" strokeWidth="12" strokeLinecap="round" />
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#10b981" strokeWidth="12" strokeLinecap="round" strokeDasharray="125" strokeDashoffset="5" className="transition-all duration-1000" />
+              </svg>
+              <div className="absolute bottom-0 flex flex-col items-center">
+                <span className="text-3xl font-bold text-white">98%</span>
+                <span className="text-xs text-emerald-400 uppercase tracking-wider mt-1">Compliant</span>
+              </div>
+            </div>
+            <div className="mt-8 flex flex-col gap-2 w-full max-w-[200px]">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">SOC2 Type II</span>
+                <span className="text-emerald-400">Pass</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">LGPD / GDPR</span>
+                <span className="text-emerald-400">Pass</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Access Audit</span>
+                <span className="text-emerald-400">Pass</span>
+              </div>
+            </div>
+          </div>
+        </Panel>
+      </section>
+
+      <section className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
+        {/* Cost Efficiency Scatter */}
+        <Panel title="Cost Efficiency Matrix" subtitle="Task Complexity vs LLM Cost (USD)" className="xl:col-span-6">
+          <div className="h-[300px] w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+                <XAxis type="number" dataKey="complexity" name="Complexity" stroke="#52525b" fontSize={10} domain={[0, 100]} />
+                <YAxis type="number" dataKey="cost" name="Cost (USD/1k)" stroke="#52525b" fontSize={10} />
+                <ZAxis type="number" dataKey="z" range={[50, 400]} name="Usage" />
+                <Tooltip cursor={{ strokeDasharray: '3 3' }} 
+                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={(value: any, name: any) => [name === 'z' ? `Count: ${value}` : `$${value}`, name === 'z' ? 'Volume' : name]}
+                />
+                <ReferenceLine y={0.01} stroke="#ef4444" strokeOpacity={0.5} strokeDasharray="3 3" label={{ value: 'Cost Limit', fill: '#ef4444', fontSize: 10 }} />
+                <Scatter name="Models" data={efficiencyData}>
+                  {efficiencyData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Scatter>
+              </ScatterChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        {/* Burn Rate Forecast */}
+        <Panel title="Burn Rate Forecast" subtitle="Actual spend vs projected limit" className="xl:col-span-6">
+          <div className="h-[300px] w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={burnForecastData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                <XAxis dataKey="date" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                <Line type="monotone" dataKey="actual" name="Actual Spend" stroke="#ef4444" strokeWidth={3} dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }} />
+                <Line type="monotone" dataKey="forecast" name="Forecast" stroke="#52525b" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+      </section>
+
+      <section className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
+        {/* Procurator Pipeline */}
+        <Panel title="Procurator Hiring Pipeline" subtitle="Freelancer sourcing flow" className="xl:col-span-8">
+          <div className="h-[200px] w-full mt-4 flex items-center justify-between px-4">
+            {[
+              { step: "Justification", status: "success", icon: <CheckCircle2 size={24} />, desc: "LLM failed 3x" },
+              { step: "Sourcing", status: "success", icon: <RefreshCw size={24} />, desc: "Upwork API" },
+              { step: "Negotiation", status: "active", icon: <DollarSign size={24} />, desc: "Awaiting quote" },
+              { step: "Approved", status: "pending", icon: <Briefcase size={24} />, desc: "Not started" },
+            ].map((stage, i, arr) => (
+              <div key={i} className="flex items-center flex-1 last:flex-none">
+                <div className="flex flex-col items-center gap-3">
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center border-2 ${
+                    stage.status === 'success' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' :
+                    stage.status === 'active' ? 'bg-cyber-purple/10 border-cyber-purple text-cyber-purple shadow-[0_0_15px_rgba(168,85,247,0.5)]' :
+                    'bg-white/5 border-white/10 text-muted-foreground'
+                  }`}>
+                    {stage.icon}
+                  </div>
+                  <div className="text-center">
+                    <span className={`block text-sm font-medium ${stage.status === 'active' ? 'text-white' : 'text-muted-foreground'}`}>{stage.step}</span>
+                    <span className="text-[10px] text-muted-foreground">{stage.desc}</span>
+                  </div>
+                </div>
+                {i < arr.length - 1 && (
+                  <div className="flex-1 h-1 mx-4 rounded-full overflow-hidden bg-white/5">
+                    <div className={`h-full ${stage.status === 'success' ? 'bg-emerald-500' : stage.status === 'active' ? 'bg-cyber-purple w-1/2 animate-pulse' : 'bg-transparent'}`}></div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </Panel>
+
+        {/* Financial Anomalies */}
+        <Panel title="Financial Anomalies" subtitle="Unusual API requests detected" className="xl:col-span-4">
+          <div className="space-y-3 mt-4 h-[200px] overflow-y-auto pr-2 scrollbar-hide">
+            {[
+              { agent: "Forge", issue: "Spike in GPT-4 calls", amount: "+$45.20", time: "10m ago" },
+              { agent: "Scout", issue: "High bandwidth scraping", amount: "+$12.50", time: "1h ago" },
+            ].map((alert, i) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-rose-500/10 border border-rose-500/20">
+                <div className="flex items-start gap-3">
+                  <AlertCircle size={16} className="text-rose-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-rose-100">{alert.agent}</p>
+                    <p className="text-xs text-rose-400/80">{alert.issue}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-rose-400">{alert.amount}</span>
+                  <p className="text-[10px] text-rose-400/60">{alert.time}</p>
+                </div>
+              </div>
+            ))}
+            <div className="flex items-center justify-center p-4 border border-dashed border-white/10 rounded-xl">
+              <span className="text-xs text-muted-foreground">All other systems nominal</span>
+            </div>
+          </div>
+        </Panel>
+      </section>
+
+      <section className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Panel title="Revenue vs Expenses" subtitle="Evolução de P&L nos últimos 6 meses">
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">

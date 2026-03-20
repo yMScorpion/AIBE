@@ -1,8 +1,39 @@
 "use client";
 
 import { PageHero, Panel, StatGrid } from "@/components/page-kit";
-import { Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
-import { GitPullRequest, Activity, Bug, Clock } from "lucide-react";
+import { Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend, PieChart, Pie, Cell, LineChart, Line } from "recharts";
+import { GitPullRequest, Activity, Bug, Clock, Server, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+
+const burndownData = [
+  { day: "Day 1", ideal: 100, actual: 100 },
+  { day: "Day 2", ideal: 90, actual: 95 },
+  { day: "Day 3", ideal: 80, actual: 85 },
+  { day: "Day 4", ideal: 70, actual: 60 },
+  { day: "Day 5", ideal: 60, actual: 55 },
+  { day: "Day 6", ideal: 50, actual: 50 },
+  { day: "Day 7", ideal: 40, actual: 35 },
+  { day: "Day 8", ideal: 30, actual: 25 },
+  { day: "Day 9", ideal: 20, actual: 20 },
+  { day: "Day 10", ideal: 10, actual: 5 },
+  { day: "Day 11", ideal: 0, actual: 0 },
+];
+
+const prSuccessData = [
+  { name: "Approved", value: 85 },
+  { name: "Changes Requested", value: 10 },
+  { name: "Rejected", value: 5 },
+];
+
+const prCOLORS = ['#10b981', '#f59e0b', '#ef4444'];
+
+const latencyData = [
+  { time: "10:00", p95: 120, p99: 250 },
+  { time: "10:05", p95: 125, p99: 260 },
+  { time: "10:10", p95: 115, p99: 240 },
+  { time: "10:15", p95: 140, p99: 310 },
+  { time: "10:20", p95: 130, p99: 280 },
+  { time: "10:25", p95: 120, p99: 245 },
+];
 
 const velocityData = [
   { sprint: "Sprint 42", prs: 35, deploys: 12, bugs: 8 },
@@ -24,9 +55,9 @@ export default function ProductPage() {
   return (
     <main className="mx-auto max-w-[1680px] pb-8">
       <PageHero
-        eyebrow="Builder View"
-        title="Entrega contínua com visão integral do ciclo de engenharia"
-        subtitle="Mapeamento do codebase, pipeline de deploy e rastreamento de bugs em uma única superfície."
+        eyebrow="Tier 2 • Product Department"
+        title="Engineering & Infrastructure"
+        subtitle="Continuous delivery, code quality, and infrastructure managed by Forge, Ember, and Cinder."
       />
       <StatGrid
         stats={[
@@ -36,7 +67,116 @@ export default function ProductPage() {
           { label: "Lead Time", value: "4h 12m", tone: "good", icon: <Clock size={20} /> },
         ]}
       />
-      <section className="mt-4 grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <section className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
+        {/* Sprint Burndown */}
+        <Panel title="Sprint Burndown" subtitle="Progress of technical tasks vs estimated time" className="xl:col-span-8">
+          <div className="h-[300px] w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={burndownData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                <XAxis dataKey="day" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                <Area type="monotone" dataKey="actual" name="Actual Tasks" stroke="#06b6d4" strokeWidth={2} fillOpacity={1} fill="url(#colorActual)" />
+                <Line type="monotone" dataKey="ideal" name="Ideal Burndown" stroke="#52525b" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        {/* PR Success Rate */}
+        <Panel title="Forge PR Review Rate" subtitle="Code approved vs rejected" className="xl:col-span-4">
+          <div className="h-[300px] w-full mt-4 flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={prSuccessData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={90}
+                  paddingAngle={5}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {prSuccessData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={prCOLORS[index % prCOLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                  itemStyle={{ color: '#fff' }}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={(value: any) => [`${value}%`, 'Share']}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+      </section>
+
+      <section className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
+        {/* CI/CD Pipeline Steppers */}
+        <Panel title="CI/CD Pipeline" subtitle="Deploy Agent stages in real-time" className="xl:col-span-6">
+          <div className="h-[200px] w-full mt-4 flex items-center justify-between px-4">
+            {[
+              { step: "Build", status: "success", icon: <Server size={24} /> },
+              { step: "Test", status: "success", icon: <CheckCircle2 size={24} /> },
+              { step: "Canary", status: "active", icon: <RefreshCw size={24} className="animate-spin" /> },
+              { step: "Production", status: "pending", icon: <AlertCircle size={24} /> },
+            ].map((stage, i, arr) => (
+              <div key={i} className="flex items-center flex-1 last:flex-none">
+                <div className="flex flex-col items-center gap-3">
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center border-2 ${
+                    stage.status === 'success' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' :
+                    stage.status === 'active' ? 'bg-cyber-cyan/10 border-cyber-cyan text-cyber-cyan shadow-[0_0_15px_rgba(6,182,212,0.5)]' :
+                    'bg-white/5 border-white/10 text-muted-foreground'
+                  }`}>
+                    {stage.icon}
+                  </div>
+                  <span className={`text-sm font-medium ${stage.status === 'active' ? 'text-white' : 'text-muted-foreground'}`}>{stage.step}</span>
+                </div>
+                {i < arr.length - 1 && (
+                  <div className="flex-1 h-1 mx-4 rounded-full overflow-hidden bg-white/5">
+                    <div className={`h-full ${stage.status === 'success' ? 'bg-emerald-500' : stage.status === 'active' ? 'bg-cyber-cyan w-1/2 animate-pulse' : 'bg-transparent'}`}></div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </Panel>
+
+        {/* API Latency */}
+        <Panel title="API Latency Monitor" subtitle="Flint generated endpoints health" className="xl:col-span-6">
+          <div className="h-[200px] w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={latencyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                <XAxis dataKey="time" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                <Line type="monotone" dataKey="p95" name="p95 (ms)" stroke="#10b981" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="p99" name="p99 (ms)" stroke="#ef4444" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+      </section>
+
+      <section className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Panel title="Engineering Velocity" subtitle="PRs, Deploys e Bugs por Sprint">
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">

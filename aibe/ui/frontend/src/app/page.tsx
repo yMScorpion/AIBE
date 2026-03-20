@@ -12,9 +12,6 @@ import {
   Terminal, 
   Users, 
   Zap, 
-  Cpu, 
-  CheckCircle2, 
-  Clock, 
   ShieldCheck, 
   Play, 
   TrendingUp,
@@ -80,13 +77,6 @@ const profitData = [
   { month: 'Jun', revenue: 85000, expenses: 38000, profit: 47000 },
 ];
 
-const interactionData = [
-  { source: "Oracle", target: "Scout", messages: 120 },
-  { source: "Scout", target: "Pulse", messages: 85 },
-  { source: "Minerva", target: "Darwin", messages: 64 },
-  { source: "Darwin", target: "Synth", messages: 150 },
-  { source: "Synth", target: "Oracle", messages: 45 },
-];
 
 type TimeRange = "24h" | "7d" | "30d";
 
@@ -231,45 +221,50 @@ export default function Page() {
         </Panel>
 
         {/* System Health */}
-        <Panel title="System Health" subtitle="Infrastructure status" className="xl:col-span-4">
-          <div className="flex flex-col gap-5 mt-2">
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-black/20 border border-white/5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
-                  <CheckCircle2 size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-white">API Gateway</p>
-                  <p className="text-xs text-muted-foreground">99.99% Uptime</p>
-                </div>
+        <Panel title="System Health & Costs" subtitle="Health Score and Token Burn Rate" className="xl:col-span-4">
+          <div className="flex flex-col gap-6 mt-4">
+            <div className="relative flex items-center justify-center p-4">
+              <svg className="w-32 h-16" viewBox="0 0 100 50">
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#27272a" strokeWidth="12" strokeLinecap="round" />
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#10b981" strokeWidth="12" strokeLinecap="round" strokeDasharray="125" strokeDashoffset="20" className="transition-all duration-1000" />
+              </svg>
+              <div className="absolute bottom-0 flex flex-col items-center">
+                <span className="text-3xl font-bold text-white">92</span>
+                <span className="text-[10px] text-emerald-400 uppercase tracking-wider font-bold">Health Score</span>
               </div>
-              <span className="text-xs font-bold text-emerald-400">12ms</span>
             </div>
 
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-black/20 border border-white/5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyber-cyan/20 text-cyber-cyan">
-                  <Cpu size={20} />
-                </div>
+            <div className="space-y-2 p-4 rounded-2xl bg-black/20 border border-white/5">
+              <div className="flex justify-between items-end">
                 <div>
-                  <p className="text-sm font-semibold text-white">LLM Router</p>
-                  <p className="text-xs text-muted-foreground">OpenRouter Active</p>
+                  <p className="text-sm font-semibold text-white">Token Burn Rate</p>
+                  <p className="text-xs text-muted-foreground">Daily Budget: $100.00</p>
                 </div>
+                <span className="text-sm font-mono text-cyber-cyan">${spend.toFixed(2)}</span>
               </div>
-              <span className="text-xs font-bold text-cyber-cyan">45ms</span>
+              <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-cyber-cyan transition-all duration-1000" style={{ width: `${Math.min((spend/100)*100, 100)}%` }}></div>
+              </div>
             </div>
 
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-black/20 border border-white/5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyber-purple/20 text-cyber-purple">
-                  <ShieldCheck size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-white">Security Ops</p>
-                  <p className="text-xs text-muted-foreground">Zero Incidents</p>
-                </div>
+            <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-3">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Global Error Rate (24h)</h4>
+              <div className="h-12 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={[
+                    { time: '1', errors: 5 }, { time: '2', errors: 2 }, { time: '3', errors: 8 },
+                    { time: '4', errors: 3 }, { time: '5', errors: 1 }, { time: '6', errors: 0 }
+                  ]}>
+                    <defs>
+                      <linearGradient id="colorErrors" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <Area type="monotone" dataKey="errors" stroke="#ef4444" fillOpacity={1} fill="url(#colorErrors)" />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
-              <span className="text-xs font-bold text-cyber-purple">Safe</span>
             </div>
           </div>
         </Panel>
@@ -307,25 +302,39 @@ export default function Page() {
           </div>
         </Panel>
 
-        {/* Live Feed */}
-        <Panel title="Event Stream" subtitle="Critical messages from the message bus" className="xl:col-span-4" action={<Link href="/events" className="text-xs font-medium text-cyber-cyan hover:underline">View All</Link>}>
-          <div className="space-y-3 mt-2 h-[300px] overflow-y-auto pr-2 scrollbar-hide">
-            {latestEvents.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-center">
-                <Clock size={32} className="text-muted-foreground/30 mb-3" />
-                <p className="text-sm text-muted-foreground">Waiting for bus events...</p>
-              </div>
-            ) : (
-              latestEvents.map((event, index) => (
-                <article key={`${event.timestamp}-${index}`} className="flex items-start gap-4 rounded-2xl border border-white/5 bg-black/20 p-4 transition-all hover:bg-white/5">
-                  <div className="mt-1 flex h-2 w-2 shrink-0 rounded-full bg-cyber-purple shadow-[0_0_8px_rgba(124,58,237,0.8)]" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white truncate capitalize">{event.event.replaceAll("_", " ")}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{new Date(event.timestamp).toLocaleTimeString()}</p>
+        {/* Event Stream / Meetings */}
+        <Panel title="Live Operations & Escalations" subtitle="Critical messages and meeting timeline" className="xl:col-span-4" action={<Link href="/events" className="text-xs font-medium text-cyber-cyan hover:underline">View All</Link>}>
+          <div className="space-y-4 mt-4 h-[300px] overflow-y-auto pr-2 scrollbar-hide">
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Active Meetings</h4>
+              {meetings.length === 0 ? (
+                <div className="text-xs text-muted-foreground italic p-2 border border-white/5 rounded bg-black/20">No active meetings.</div>
+              ) : (
+                meetings.map(m => (
+                  <div key={m.meeting_id} className="flex items-center justify-between bg-cyber-purple/10 border border-cyber-purple/20 p-2 rounded-lg">
+                    <span className="text-sm font-medium text-cyber-purple">{m.topic}</span>
+                    <span className="text-xs text-muted-foreground">{m.participants.length} agents</span>
                   </div>
-                </article>
-              ))
-            )}
+                ))
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recent Events & Alerts</h4>
+              {latestEvents.length === 0 ? (
+                <div className="text-xs text-muted-foreground italic p-2 border border-white/5 rounded bg-black/20">Waiting for events...</div>
+              ) : (
+                latestEvents.map((event, index) => (
+                  <article key={`${event.timestamp}-${index}`} className={`flex items-start gap-3 rounded-xl border p-3 transition-all ${event.event.includes('error') || event.event.includes('alert') ? 'border-rose-500/20 bg-rose-500/10' : 'border-white/5 bg-black/20 hover:bg-white/5'}`}>
+                    <div className={`mt-1 flex h-2 w-2 shrink-0 rounded-full ${event.event.includes('error') ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]' : 'bg-cyber-cyan shadow-[0_0_8px_rgba(6,182,212,0.8)]'}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-white truncate capitalize">{event.event.replaceAll("_", " ")}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{new Date(event.timestamp).toLocaleTimeString()}</p>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
           </div>
         </Panel>
 
@@ -403,28 +412,55 @@ export default function Page() {
           </div>
         </Panel>
 
-        {/* Agent Interactions */}
-        <Panel title="Agent Interactions" subtitle="Cross-department communication volume" className="xl:col-span-6">
-          <div className="h-[300px] w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={interactionData} layout="vertical" margin={{ top: 10, right: 20, left: 20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={true} vertical={false} />
-                <XAxis type="number" stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis dataKey="source" type="category" stroke="#52525b" fontSize={12} tickLine={false} axisLine={false} width={80} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
-                  cursor={{ fill: '#27272a', opacity: 0.4 }}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={(value: any, name: any, props: any) => [`${value} messages to ${props.payload.target}`, 'Volume']}
-                />
-                <Bar dataKey="messages" fill="#f59e0b" radius={[0, 4, 4, 0]} barSize={24}>
-                  {interactionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[(index + 3) % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+        {/* Heatmap & Bottlenecks */}
+        <Panel title="Autonomous Activity Heatmap" subtitle="Execution density per agent over time" className="xl:col-span-8">
+          <div className="mt-4 grid grid-cols-12 gap-1 h-[300px]">
+            {/* Mock heatmap implementation using grid */}
+            {Array.from({ length: 7 }).map((_, day) => (
+              Array.from({ length: 12 }).map((_, hour) => {
+                const intensity = Math.random();
+                return (
+                  <div 
+                    key={`${day}-${hour}`} 
+                    className="rounded-sm w-full h-full"
+                    style={{ 
+                      backgroundColor: `rgba(16, 185, 129, ${intensity * 0.8})`,
+                      border: '1px solid rgba(255,255,255,0.02)'
+                    }}
+                    title={`Day ${day+1}, Block ${hour+1}: ${Math.floor(intensity * 100)} tasks`}
+                  />
+                );
+              })
+            ))}
+          </div>
+        </Panel>
+
+        {/* Bottleneck Leaderboard */}
+        <Panel title="Bottleneck Leaderboard" subtitle="Agents with highest task queues" className="xl:col-span-4">
+          <div className="mt-4 space-y-3 h-[300px] overflow-y-auto pr-2 scrollbar-hide">
+            {[
+              { agent: "Forge", dept: "Product", queue: 45, trend: "+12" },
+              { agent: "Ember", dept: "Product", queue: 32, trend: "+5" },
+              { agent: "Quill", dept: "Marketing", queue: 28, trend: "-2" },
+              { agent: "Vega", dept: "Research", queue: 15, trend: "0" },
+              { agent: "Pulse", dept: "Research", queue: 12, trend: "-5" },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-white/5 hover:bg-white/5 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center text-xs font-bold text-muted-foreground">
+                    #{i + 1}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-white">{item.agent}</p>
+                    <p className="text-xs text-muted-foreground">{item.dept}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-rose-400">{item.queue} pending</p>
+                  <p className={`text-xs ${item.trend.startsWith('+') ? 'text-rose-500' : 'text-emerald-400'}`}>{item.trend}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </Panel>
 
