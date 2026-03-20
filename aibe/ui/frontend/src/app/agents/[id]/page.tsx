@@ -105,13 +105,13 @@ export default function AgentDetailPage() {
         <Panel title="Task Stream" subtitle="Últimas tarefas registradas para este agente">
           <ul className="space-y-2 text-sm">
             {loading ? (
-              <li className="rounded-lg border border-border bg-secondary/60 p-3">Carregando tarefas...</li>
+              <li className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">Carregando tarefas...</li>
             ) : tasks.length === 0 ? (
-              <li className="rounded-lg border border-border bg-secondary/60 p-3">Nenhuma tarefa encontrada para este agente.</li>
+              <li className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">Nenhuma tarefa encontrada para este agente.</li>
             ) : (
               tasks.slice(0, 6).map((task) => (
-                <li key={task.task_id} className="rounded-lg border border-border bg-secondary/60 p-3">
-                  <p className="font-medium">{task.title}</p>
+                <li key={task.task_id} className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">
+                  <p className="font-medium text-white">{task.title}</p>
                   <p className="mt-1 text-xs text-muted-foreground">Status: {task.status} · Prioridade: {task.priority}</p>
                 </li>
               ))
@@ -122,26 +122,26 @@ export default function AgentDetailPage() {
           <ul className="space-y-2 text-sm">
             {costDetail?.by_model?.length ? (
               costDetail.by_model.slice(0, 6).map((entry) => (
-                <li key={entry.model} className="rounded-lg border border-border bg-secondary/60 p-3">
-                  <p className="font-medium">{entry.model}</p>
+                <li key={entry.model} className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">
+                  <p className="font-medium text-white">{entry.model}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Calls: {entry.calls} · Tokens: {entry.tokens_in + entry.tokens_out} · Custo: ${entry.cost_usd.toFixed(4)}
                   </p>
                 </li>
               ))
             ) : (
-              <li className="rounded-lg border border-border bg-secondary/60 p-3">Sem breakdown de custo disponível.</li>
+              <li className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">Sem breakdown de custo disponível.</li>
             )}
           </ul>
         </Panel>
         <Panel title="Quick Actions" subtitle="Atalhos operacionais para análise e controle">
-          <div className="rounded-lg border border-border bg-black/70 p-3 font-mono text-xs text-cyber-green">
+          <div className="rounded-xl border border-white/5 bg-black/40 p-4 font-mono text-xs text-cyber-green/90 shadow-inner">
             <p>$ aibe agent inspect --id {id}</p>
-            <p className="mt-1">$ aibe task list --agent {id}</p>
-            <p className="mt-1">$ aibe budget show --agent {id}</p>
-            <div className="mt-3 border-t border-border pt-3 text-xs">
-              <Link href="/office-3d" className="text-cyber-cyan hover:underline">
-                Abrir Escritório 3D
+            <p className="mt-2">$ aibe task list --agent {id}</p>
+            <p className="mt-2">$ aibe budget show --agent {id}</p>
+            <div className="mt-4 border-t border-white/10 pt-4 text-xs">
+              <Link href="/office-3d" className="flex items-center gap-2 text-cyber-cyan hover:text-cyber-cyan/80 transition-colors">
+                <span>Abrir Escritório 3D</span>
               </Link>
             </div>
           </div>

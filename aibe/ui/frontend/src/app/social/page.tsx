@@ -18,15 +18,18 @@ export default function SocialPage() {
       />
       <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Panel title="Post Preview" subtitle="Pré-visualização cross-platform de conteúdo">
-          <p className="rounded-lg border border-border bg-secondary/60 p-3 text-sm">3 criativos aguardando aprovação final com personalização por plataforma.</p>
+          <p className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">3 criativos aguardando aprovação final com personalização por plataforma.</p>
         </Panel>
         <Panel title="Engagement Feed" subtitle="Fluxo vivo de menções e respostas">
-          <p className="rounded-lg border border-border bg-secondary/60 p-3 text-sm">Pico de menções em produto flagship com sentimento líquido positivo.</p>
+          <p className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">Pico de menções em produto flagship com sentimento líquido positivo.</p>
         </Panel>
         <Panel title="Trend Radar" subtitle="Detecta movimentos emergentes de audiência">
-          <p className="rounded-lg border border-border bg-secondary/60 p-3 text-sm">Tema em ascensão: automação sustentável em SMB.</p>
+          <p className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">Tema em ascensão: automação sustentável em SMB.</p>
         </Panel>
       </section>
     </main>
   );
 }
+
+
+

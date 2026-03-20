@@ -24,13 +24,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${jetbrains.variable} font-sans`}>
+      <body className={`${inter.variable} ${jetbrains.variable} font-sans bg-background text-foreground`}>
         <Providers>
-          <div className="fixed inset-0 -z-10">
-            <div className="absolute inset-0 bg-[#06060a]" />
-            <div className="absolute inset-0 bg-cyber-mesh bg-mesh opacity-30" />
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-radial from-cyber-purple/[0.07] via-transparent to-transparent" />
-            <div className="absolute bottom-0 right-0 w-[600px] h-[400px] bg-gradient-radial from-cyber-cyan/[0.04] via-transparent to-transparent" />
+          <div className="fixed inset-0 -z-10 bg-[#0a0a0c]">
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay"></div>
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-cyber-purple/20 blur-[120px]"></div>
+            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyber-cyan/10 blur-[120px]"></div>
+            <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] rounded-full bg-emerald-500/10 blur-[120px]"></div>
           </div>
           <ErrorBoundary>
             <AppShell>{children}</AppShell>

@@ -18,15 +18,18 @@ export default function MlPage() {
       />
       <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Panel title="ModelRegistry.tsx" subtitle="Catálogo versionado e aprovado por política">
-          <p className="rounded-lg border border-border bg-secondary/60 p-3 text-sm">4 modelos candidatos prontos para promoção.</p>
+          <p className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">4 modelos candidatos prontos para promoção.</p>
         </Panel>
         <Panel title="ExperimentTracker.tsx" subtitle="Comparativo de métricas e hipóteses">
-          <p className="rounded-lg border border-border bg-secondary/60 p-3 text-sm">Melhor experimento superou baseline em +4.3% F1.</p>
+          <p className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">Melhor experimento superou baseline em +4.3% F1.</p>
         </Panel>
         <Panel title="PipelineHealth.tsx" subtitle="Saúde de jobs de treino e serving">
-          <p className="rounded-lg border border-border bg-secondary/60 p-3 text-sm">Sem backlog crítico nos workers de inferência.</p>
+          <p className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">Sem backlog crítico nos workers de inferência.</p>
         </Panel>
       </section>
     </main>
   );
 }
+
+
+

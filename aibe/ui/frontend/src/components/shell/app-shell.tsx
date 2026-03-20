@@ -31,8 +31,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative flex min-h-screen">
-      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((v) => !v)} />
-      <div className="min-w-0 flex-1 px-3 pb-6 pt-3 md:px-6">
+      <div className="pl-4 pt-4 pb-4">
+        <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((v) => !v)} />
+      </div>
+      <div className="min-w-0 flex-1 px-4 pb-6 pt-4 md:px-6">
         <SystemStatusBar onOpenNotifications={() => setNotificationOpen(true)} />
         {children}
       </div>

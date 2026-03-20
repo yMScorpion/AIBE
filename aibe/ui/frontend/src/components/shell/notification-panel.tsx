@@ -31,36 +31,40 @@ export function NotificationPanel({ open, onClose }: NotificationPanelProps) {
     <>
       {open ? <button type="button" className="fixed inset-0 z-30 bg-black/45" onClick={onClose} aria-label="Fechar notificações" /> : null}
       <aside
-        className={`glass-heavy fixed right-0 top-0 z-40 h-screen w-full max-w-[420px] border-l border-border transition-transform duration-300 ${
+        className={`glass-heavy fixed right-0 top-0 z-40 h-screen w-full max-w-[420px] border-l border-white/10 transition-transform duration-300 ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
         aria-label="Painel de notificações"
       >
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div className="flex items-center justify-between border-b border-white/5 px-6 py-5 bg-black/40">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-cyber-cyan">Notification Panel</p>
-            <p className="text-lg font-semibold">Live Alerts & Events</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-cyber-cyan mb-1">Notification Panel</p>
+            <p className="text-xl font-bold tracking-tight text-white">Live Alerts</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-lg border border-border bg-secondary px-2 py-1 text-sm hover:bg-accent">
+          <button type="button" onClick={onClose} className="rounded-full flex h-8 w-8 items-center justify-center border border-white/10 bg-white/5 text-muted-foreground transition-all hover:bg-white/10 hover:text-white">
             ✕
           </button>
         </div>
-        <div className="h-[calc(100%-76px)] space-y-2 overflow-y-auto p-4">
-          {hydrated.length === 0 ? <p className="rounded-xl bg-secondary p-3 text-sm text-muted-foreground">Nenhum alerta no momento.</p> : null}
+        <div className="h-[calc(100%-88px)] space-y-3 overflow-y-auto p-6 scrollbar-hide">
+          {hydrated.length === 0 ? <p className="rounded-xl bg-black/20 border border-white/5 p-4 text-sm text-muted-foreground text-center">Nenhum alerta no momento.</p> : null}
           {hydrated.map((notification) => (
-            <article key={notification.id} className="rounded-xl border border-border bg-secondary/80 p-3">
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <p className="truncate text-sm font-semibold capitalize">{notification.title}</p>
+            <article key={notification.id} className="relative overflow-hidden rounded-2xl border border-white/5 bg-black/40 p-4 transition-all hover:border-white/10 hover:bg-black/60">
+              <div className="absolute left-0 top-0 h-full w-1 bg-cyber-purple/50"></div>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="truncate text-sm font-bold capitalize text-white">{notification.title}</p>
                 <button
                   type="button"
                   onClick={() => dismiss(notification.id)}
-                  className="rounded border border-border px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground hover:text-foreground"
+                  className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground transition-all hover:bg-white/10 hover:text-white"
                 >
                   Dismiss
                 </button>
               </div>
-              <p className="line-clamp-3 text-xs text-muted-foreground">{notification.detail || "Evento recebido sem payload."}</p>
-              <p className="mt-2 text-[11px] text-cyber-cyan">{new Date(notification.timestamp).toLocaleString()}</p>
+              <p className="line-clamp-3 text-xs leading-relaxed text-muted-foreground">{notification.detail || "Evento recebido sem payload."}</p>
+              <div className="mt-3 flex items-center gap-2">
+                <span className="flex h-1.5 w-1.5 rounded-full bg-cyber-cyan"></span>
+                <p className="text-[11px] font-medium text-cyber-cyan/80">{new Date(notification.timestamp).toLocaleString()}</p>
+              </div>
             </article>
           ))}
         </div>

@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useWsStore } from "@/stores/ws-store";
 import { useAgentStore } from "../../stores/agent-store";
+import { Bell, Search, Terminal } from "lucide-react";
 
 interface SystemStatusBarProps {
   onOpenNotifications: () => void;
@@ -20,26 +21,52 @@ export function SystemStatusBar({ onOpenNotifications }: SystemStatusBarProps) {
   const pendingTasks = useAgentStore((s) => s.pendingTasks);
 
   return (
-    <header className="glass sticky top-3 z-20 mb-4 rounded-2xl border border-border/70 px-4 py-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <StatusChip label="System Health" value={connected ? "Online" : "Offline"} tone={connected ? "good" : "warn"} />
-          <StatusChip label="Agents" value={`${runningCount}/${agents.length || 40}`} tone="info" />
-          <StatusChip label="Active Tasks" value={String(pendingTasks)} tone="neutral" />
-          <StatusChip label="Cost Today" value={`$${spend.toFixed(2)}`} tone="info" />
+    <header className="sticky top-4 z-20 mb-6 flex items-center justify-between gap-4 rounded-3xl bg-card/40 backdrop-blur-md border border-white/5 px-6 py-4 shadow-sm">
+      <div className="flex flex-1 items-center gap-6">
+        <div className="relative w-full max-w-md hidden md:block">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+          <input 
+            type="text" 
+            placeholder="Search agents, tasks, or metrics..." 
+            className="w-full rounded-2xl bg-black/20 border border-white/10 py-2 pl-10 pr-12 text-sm text-white placeholder-muted-foreground outline-none transition-all focus:border-cyber-purple/50 focus:bg-black/40 focus:ring-1 focus:ring-cyber-purple/50"
+          />
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+            ⌘K
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onOpenNotifications}
-            className="rounded-lg border border-border bg-secondary px-3 py-1.5 text-sm hover:bg-accent"
-            aria-label="Abrir painel de notificações"
-          >
-            Alerts
-          </button>
-          <span className="rounded-lg border border-border bg-secondary px-2.5 py-1 text-xs text-muted-foreground">
-            {events.length} eventos
-          </span>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-2 mr-4">
+          <StatusChip icon={<Terminal size={14}/>} value={`${runningCount}/${agents.length || 40} Agents`} tone="info" />
+          <StatusChip value={`$${spend.toFixed(2)} Cost`} tone={spend > 100 ? "warn" : "neutral"} />
+          <div className="h-6 w-[1px] bg-white/10 mx-2"></div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onOpenNotifications}
+          className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-muted-foreground transition-all hover:bg-white/10 hover:text-white"
+          aria-label="Abrir painel de notificações"
+        >
+          <Bell size={18} />
+          {events.length > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-cyber-purple text-[9px] font-bold text-white shadow-sm ring-2 ring-background">
+              {events.length > 99 ? "99+" : events.length}
+            </span>
+          )}
+        </button>
+
+        <div className="flex items-center gap-3 pl-2">
+          <div className="flex flex-col items-end">
+            <span className="text-sm font-semibold text-white">Adriano Admin</span>
+            <span className="text-xs text-muted-foreground">CEO Assistant</span>
+          </div>
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyber-cyan to-cyber-purple p-[2px] shadow-sm">
+            <div className="h-full w-full rounded-[10px] bg-card overflow-hidden">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Adriano" alt="Profile" className="h-full w-full object-cover" />
+            </div>
+          </div>
         </div>
       </div>
     </header>
@@ -47,27 +74,27 @@ export function SystemStatusBar({ onOpenNotifications }: SystemStatusBarProps) {
 }
 
 function StatusChip({
-  label,
+  icon,
   value,
   tone,
 }: {
-  label: string;
+  icon?: React.ReactNode;
   value: string;
   tone: "good" | "warn" | "info" | "neutral";
 }) {
   const toneClass =
     tone === "good"
-      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+      ? "text-emerald-400"
       : tone === "warn"
-        ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
+        ? "text-amber-400"
         : tone === "info"
-          ? "border-cyber-cyan/30 bg-cyber-cyan/10 text-cyber-cyan"
-          : "border-border bg-secondary text-muted-foreground";
+          ? "text-cyber-cyan"
+          : "text-muted-foreground";
 
   return (
-    <div className={`rounded-xl border px-3 py-1.5 ${toneClass}`}>
-      <p className="text-[10px] uppercase tracking-[0.2em]">{label}</p>
-      <p className="font-mono text-sm font-semibold">{value}</p>
+    <div className="flex items-center gap-1.5 rounded-full border border-white/5 bg-black/20 px-3 py-1 text-sm font-medium">
+      {icon && <span className={toneClass}>{icon}</span>}
+      <span className={toneClass}>{value}</span>
     </div>
   );
 }

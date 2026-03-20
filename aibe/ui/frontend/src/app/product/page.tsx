@@ -18,15 +18,18 @@ export default function ProductPage() {
       />
       <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Panel title="Codebase Map" subtitle="Arquitetura de módulos, ownership e riscos">
-          <p className="rounded-lg border border-border bg-secondary/60 p-3 text-sm">Domínios core, integrações e hotspots de complexidade estão mapeados por criticidade.</p>
+          <p className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">Domínios core, integrações e hotspots de complexidade estão mapeados por criticidade.</p>
         </Panel>
         <Panel title="Deployment Pipeline" subtitle="Estado da esteira de build, testes e release">
-          <p className="rounded-lg border border-border bg-secondary/60 p-3 text-sm">Build green · QA validado · canary em 12% do tráfego.</p>
+          <p className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">Build green · QA validado · canary em 12% do tráfego.</p>
         </Panel>
         <Panel title="Bug Tracker" subtitle="Fila priorizada por impacto em negócio">
-          <p className="rounded-lg border border-border bg-secondary/60 p-3 text-sm">2 críticos, 6 altos, 14 médios. SLA crítico: 2h.</p>
+          <p className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">2 críticos, 6 altos, 14 médios. SLA crítico: 2h.</p>
         </Panel>
       </section>
     </main>
   );
 }
+
+
+

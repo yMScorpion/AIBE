@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "@/components/shell/navigation";
+import { ChevronLeft, ChevronRight, Hexagon } from "lucide-react";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -14,50 +15,60 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   return (
     <aside
-      className={`glass-heavy sticky top-0 flex h-screen flex-col border-r border-border/80 transition-all duration-300 ${
-        collapsed ? "w-[84px]" : "w-[270px]"
+      className={`glass sticky top-4 flex h-[calc(100vh-32px)] flex-col rounded-3xl border border-white/10 transition-all duration-300 z-50 ${
+        collapsed ? "w-[84px]" : "w-[260px]"
       }`}
     >
-      <div className="flex items-center justify-between border-b border-border/70 px-4 py-4">
-        <div className={`transition-opacity ${collapsed ? "opacity-0" : "opacity-100"}`}>
-          <p className="text-xs uppercase tracking-[0.22em] text-cyber-cyan">AIBE v2.0</p>
-          <p className="text-lg font-semibold">Operations Grid</p>
+      <div className="flex items-center justify-between px-6 py-6 mt-2">
+        <div className={`flex items-center gap-3 transition-opacity ${collapsed ? "opacity-0 hidden" : "opacity-100"}`}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-cyber-purple to-cyber-cyan text-white shadow-lg">
+            <Hexagon size={18} className="fill-current" />
+          </div>
+          <span className="text-xl font-bold tracking-tight text-white">AIBE</span>
         </div>
         <button
           type="button"
           onClick={onToggle}
-          className="rounded-lg border border-border bg-secondary px-2 py-1 text-xs font-medium hover:bg-accent"
-          aria-label="Alternar navegação"
+          className={`flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-muted-foreground transition-all hover:bg-white/10 hover:text-white ${
+            collapsed ? "mx-auto" : ""
+          }`}
+          aria-label="Toggle Sidebar"
         >
-          {collapsed ? "›" : "‹"}
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 space-y-2 overflow-y-auto px-4 py-4 scrollbar-hide">
+        <div className={`mb-4 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 ${collapsed ? "text-center" : ""}`}>
+          {collapsed ? "•••" : "Menu"}
+        </div>
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href;
+          const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`group flex items-center gap-3 rounded-xl border px-3 py-2.5 transition ${
+              className={`group flex items-center gap-3 rounded-2xl px-3 py-3 transition-all duration-200 ${
                 active
-                  ? "border-cyber-purple/50 bg-cyber-purple/10 text-white"
-                  : "border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-secondary hover:text-foreground"
+                  ? "bg-gradient-to-r from-cyber-purple/20 to-transparent text-white border border-cyber-purple/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]"
+                  : "text-muted-foreground hover:bg-white/5 hover:text-white"
               }`}
             >
               <span
-                className={`flex h-8 w-8 items-center justify-center rounded-md text-xs font-semibold ${
-                  active ? "bg-cyber-purple/25 text-cyber-cyan" : "bg-secondary"
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-200 ${
+                  active 
+                    ? "bg-cyber-purple text-white shadow-[0_0_15px_rgba(124,58,237,0.4)]" 
+                    : "bg-transparent group-hover:bg-white/5"
                 }`}
               >
-                {item.shortLabel}
+                <Icon size={20} strokeWidth={active ? 2.5 : 2} />
               </span>
               {!collapsed ? (
                 <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                  <span className="truncate text-sm font-medium">{item.label}</span>
+                  <span className={`truncate font-medium ${active ? "text-white" : ""}`}>{item.label}</span>
                   {item.badge ? (
-                    <span className="rounded-full border border-cyber-cyan/30 bg-cyber-cyan/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-cyber-cyan">
+                    <span className="rounded-full bg-cyber-cyan/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-cyber-cyan border border-cyber-cyan/20">
                       {item.badge}
                     </span>
                   ) : null}
@@ -68,15 +79,28 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         })}
       </nav>
 
-      <div className="border-t border-border/70 p-3">
-        <div className="rounded-xl border border-border/70 bg-secondary/50 p-3">
+      <div className="p-4 mt-auto">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/5 to-white/0 border border-white/5 p-4 backdrop-blur-xl">
+          <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-cyber-purple/20 blur-2xl" />
+          <div className="absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-cyber-cyan/20 blur-2xl" />
           {!collapsed ? (
-            <>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Fleet Runtime</p>
-              <p className="mt-1 text-sm font-medium text-cyber-green">Stable · Synced</p>
-            </>
+            <div className="relative z-10">
+              <p className="text-xs font-semibold text-white">System Status</p>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                </span>
+                <span className="text-xs font-medium text-emerald-400">All Systems Operational</span>
+              </div>
+            </div>
           ) : (
-            <div className="mx-auto h-2 w-2 rounded-full bg-cyber-green" aria-hidden="true" />
+            <div className="relative z-10 flex justify-center">
+              <span className="relative flex h-3 w-3">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500"></span>
+              </span>
+            </div>
           )}
         </div>
       </div>

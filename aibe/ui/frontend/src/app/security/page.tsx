@@ -18,15 +18,18 @@ export default function SecurityPage() {
       />
       <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Panel title="SecurityGate.tsx" subtitle="Validação de políticas antes de ações críticas">
-          <p className="rounded-lg border border-border bg-secondary/60 p-3 text-sm">Bloqueio ativo para deploy sem assinatura de segurança.</p>
+          <p className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">Bloqueio ativo para deploy sem assinatura de segurança.</p>
         </Panel>
         <Panel title="VulnerabilityBoard.tsx" subtitle="Kanban de remediação com priorização por risco">
-          <p className="rounded-lg border border-border bg-secondary/60 p-3 text-sm">Colunas: Triage, In Progress, Validation, Closed.</p>
+          <p className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">Colunas: Triage, In Progress, Validation, Closed.</p>
         </Panel>
         <Panel title="ThreatFeed.tsx" subtitle="Inteligência de ameaças e anomalias de runtime">
-          <p className="rounded-lg border border-border bg-secondary/60 p-3 text-sm">Indicador recente: tentativas de brute force mitigadas no edge.</p>
+          <p className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">Indicador recente: tentativas de brute force mitigadas no edge.</p>
         </Panel>
       </section>
     </main>
   );
 }
+
+
+

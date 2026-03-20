@@ -18,15 +18,18 @@ export default function MarketingPage() {
       />
       <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Panel title="Campaign Matrix" subtitle="Distribuição por canal, custo e performance">
-          <p className="rounded-lg border border-border bg-secondary/60 p-3 text-sm">Search, social e lifecycle sincronizados com alocação dinâmica de verba.</p>
+          <p className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">Search, social e lifecycle sincronizados com alocação dinâmica de verba.</p>
         </Panel>
         <Panel title="Content Calendar" subtitle="Planejamento de narrativas e lançamentos">
-          <p className="rounded-lg border border-border bg-secondary/60 p-3 text-sm">5 janelas de lançamento esta semana com assets em revisão final.</p>
+          <p className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">5 janelas de lançamento esta semana com assets em revisão final.</p>
         </Panel>
         <Panel title="SEO Dashboard" subtitle="Evolução de rankings, tráfego e intenção">
-          <p className="rounded-lg border border-border bg-secondary/60 p-3 text-sm">42 keywords em top 3 e crescimento consistente em cluster estratégico.</p>
+          <p className="rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-muted-foreground">42 keywords em top 3 e crescimento consistente em cluster estratégico.</p>
         </Panel>
       </section>
     </main>
   );
 }
+
+
+
